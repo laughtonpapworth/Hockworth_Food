@@ -4,95 +4,157 @@ const calendarDocRef = () =>
 let CALENDAR = {};
 let calendarUnsubscribe = null;
 
-function nextNDays(n) {
-  const days = [];
-  const today = new Date();
-  for (let i = 0; i < n; i++) {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    days.push(d);
-  }
-  return days;
-}
+const today = new Date();
+let viewYear = today.getFullYear();
+let viewMonth = today.getMonth(); // 0-indexed
 
 function isoDate(d) {
-  return d.toISOString().slice(0, 10);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
-function formatDayLabel(d, iso) {
-  const today = isoDate(new Date());
-  const tomorrow = isoDate(new Date(Date.now() + 86400000));
-  const weekday = d.toLocaleDateString('en-GB', { weekday: 'short' });
-  const dayMonth = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-  if (iso === today) return `Today · ${dayMonth}`;
-  if (iso === tomorrow) return `Tomorrow · ${dayMonth}`;
-  return `${weekday} ${dayMonth}`;
+// Parsed with an explicit time to avoid the UTC-midnight/local-timezone
+// off-by-one-day bug that "new Date('YYYY-MM-DD')" alone can cause.
+function parseIso(iso) {
+  return new Date(iso + 'T00:00:00');
 }
 
-// Every recipe currently in the Plan or Saved lists (they're mutually
-// exclusive by status, so no de-duplication needed).
-function allAssignableRecipes() {
-  const plan = typeof planRecipes === 'function' ? planRecipes() : [];
-  const saved = typeof savedRecipes === 'function' ? savedRecipes() : [];
-  return [...plan, ...saved];
-}
-
+// ---- Month grid rendering ----
 function renderCalendar() {
   const container = document.getElementById('calendar-list');
   if (!container) return;
-  const recipes = allAssignableRecipes();
-  const days = nextNDays(14);
 
-  container.innerHTML = days.map(d => {
+  const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+  const firstOfMonth = new Date(viewYear, viewMonth, 1);
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const leadingBlanks = (firstOfMonth.getDay() + 6) % 7; // Monday-first week
+  const todayIso = isoDate(today);
+
+  let cells = '';
+  for (let i = 0; i < leadingBlanks; i++) cells += `<div class="cal-cell cal-empty"></div>`;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(viewYear, viewMonth, day);
     const iso = isoDate(d);
     const assigned = CALENDAR[iso];
-    const label = formatDayLabel(d, iso);
-
-    const assignedHtml = assigned
-      ? `<div class="cal-assigned"><span>${assigned.title}</span><button type="button" class="cal-remove-btn" data-date="${iso}">✕</button></div>`
-      : `<button type="button" class="secondary-btn cal-add-btn" data-date="${iso}">+ Add recipe</button>`;
-
-    const options = recipes.map(r =>
-      `<option value="${r.id || r.title}" data-title="${(r.title || '').replace(/"/g, '&quot;')}">${r.title}</option>`
-    ).join('');
-
-    return `
-      <div class="cal-day">
-        <div class="cal-date">${label}</div>
-        ${assignedHtml}
-        <select class="cal-picker" data-date="${iso}" style="display:none;">
-          <option value="">Choose a recipe...</option>
-          ${options}
-        </select>
+    const classes = ['cal-cell'];
+    if (iso === todayIso) classes.push('cal-today');
+    if (assigned) classes.push('cal-has-recipe');
+    cells += `
+      <div class="${classes.join(' ')}" data-date="${iso}">
+        <div class="cal-daynum">${day}</div>
+        ${assigned ? `<div class="cal-cell-title">${assigned.title}</div>` : ''}
       </div>`;
-  }).join('');
+  }
 
-  container.querySelectorAll('.cal-add-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const date = btn.dataset.date;
-      const picker = container.querySelector(`.cal-picker[data-date="${date}"]`);
-      btn.style.display = 'none';
-      picker.style.display = '';
-      picker.focus();
-    });
-  });
+  const trailingBlanks = (7 - ((leadingBlanks + daysInMonth) % 7)) % 7;
+  for (let i = 0; i < trailingBlanks; i++) cells += `<div class="cal-cell cal-empty"></div>`;
 
-  container.querySelectorAll('.cal-picker').forEach(select => {
-    select.addEventListener('change', () => {
-      const date = select.dataset.date;
-      const opt = select.selectedOptions[0];
-      if (!opt || !opt.value) return;
-      assignRecipe(date, opt.value, opt.dataset.title);
-    });
-  });
+  container.innerHTML = `
+    <div class="cal-header">
+      <button type="button" class="cal-nav-btn" id="cal-prev">‹</button>
+      <div class="cal-month-label">${monthLabel}</div>
+      <button type="button" class="cal-nav-btn" id="cal-next">›</button>
+    </div>
+    <div class="cal-weekdays"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+    <div class="cal-grid">${cells}</div>`;
 
-  container.querySelectorAll('.cal-remove-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      removeRecipe(btn.dataset.date);
-    });
+  document.getElementById('cal-prev').addEventListener('click', () => changeMonth(-1));
+  document.getElementById('cal-next').addEventListener('click', () => changeMonth(1));
+  container.querySelectorAll('.cal-cell[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => openDayModal(cell.dataset.date));
   });
 }
 
+function changeMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  renderCalendar();
+}
+
+// ---- Day detail popup ----
+function openDayModal(iso) {
+  const assigned = CALENDAR[iso];
+  const label = parseIso(iso).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  if (!assigned) {
+    showModal(`
+      <h3>${label}</h3>
+      <p class="muted">Nothing planned for this day yet. Add a recipe from the Plan tab and choose this date from there.</p>
+      <div class="card-actions" style="margin-top:14px;">
+        <button class="secondary-btn" id="modal-close-btn">Close</button>
+      </div>`);
+    document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+    return;
+  }
+
+  showModal(`
+    <h3>${label}</h3>
+    <p class="cal-modal-title">${assigned.title}</p>
+    <div class="card-actions">
+      <button class="primary-btn" id="modal-view-recipe-btn">View recipe</button>
+      <button class="secondary-btn" id="modal-remove-day-btn">Remove</button>
+    </div>`);
+  document.getElementById('modal-view-recipe-btn').addEventListener('click', () => {
+    closeModal();
+    goToRecipeInPlan(assigned.id, assigned.title);
+  });
+  document.getElementById('modal-remove-day-btn').addEventListener('click', () => {
+    removeRecipe(iso);
+    closeModal();
+  });
+}
+
+// ---- Date-picker popup, launched from a recipe card's "Add to calendar" button ----
+function openDatePickerModal(recipeId, title) {
+  const defaultDate = isoDate(today);
+  showModal(`
+    <h3>Add to calendar</h3>
+    <p class="cal-modal-title">${title}</p>
+    <label for="modal-date-input" class="muted" style="display:block; margin:12px 0 6px;">Choose a day</label>
+    <input type="date" id="modal-date-input" value="${defaultDate}" min="${defaultDate}">
+    <div class="card-actions" style="margin-top:16px;">
+      <button class="primary-btn" id="modal-confirm-btn">Add</button>
+      <button class="secondary-btn" id="modal-cancel-btn">Cancel</button>
+    </div>`);
+  document.getElementById('modal-confirm-btn').addEventListener('click', () => {
+    const date = document.getElementById('modal-date-input').value;
+    if (!date) return;
+    assignRecipe(date, recipeId, title);
+    closeModal();
+  });
+  document.getElementById('modal-cancel-btn').addEventListener('click', closeModal);
+}
+
+// ---- Jump to the Plan tab and highlight the matching recipe ----
+function goToRecipeInPlan(recipeId, title) {
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const planNavBtn = document.querySelector('.nav-btn[data-tab="recipes"]');
+  if (planNavBtn) planNavBtn.classList.add('active');
+  document.getElementById('recipes').classList.add('active');
+
+  document.querySelectorAll('#recipes .filter-btn').forEach(b => b.classList.remove('active'));
+  const allBtn = document.querySelector('#recipes .filter-btn[data-filter="all"]');
+  if (allBtn) allBtn.classList.add('active');
+  if (typeof renderRecipes === 'function') renderRecipes('all');
+
+  setTimeout(() => {
+    const card = document.querySelector(`#recipe-list .card[data-recipe-id="${CSS.escape(recipeId)}"]`);
+    if (card) {
+      card.classList.add('expanded', 'cal-highlight');
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => card.classList.remove('cal-highlight'), 1600);
+    } else {
+      alert(`"${title}" isn't currently in the Plan — it may have been removed, or only exists in Saved.`);
+    }
+  }, 50);
+}
+
+// ---- Firestore actions ----
 function assignRecipe(date, recipeId, title) {
   const ref = calendarDocRef();
   if (!ref) { alert('Sign in first to use the calendar.'); return; }

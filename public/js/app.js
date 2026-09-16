@@ -13,6 +13,22 @@ let RECIPES = [];       // built-in recipes from recipes.json — default status
 let DISCOVERED = [];    // saved-from-Discover recipes — default status 'saved'
 let STATUS = {};        // Firestore overrides: { [recipeId]: 'plan' | 'saved' }
 
+// ---- Small reusable modal (used by the calendar date picker and day popup) ----
+function showModal(innerHtml) {
+  closeModal();
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.id = 'active-modal';
+  overlay.innerHTML = `<div class="modal-box">${innerHtml}</div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+function closeModal() {
+  const existing = document.getElementById('active-modal');
+  if (existing) existing.remove();
+}
+
 // A built-in recipe is 'plan' unless explicitly overridden to 'saved'.
 // A discovered recipe is 'saved' unless explicitly promoted to 'plan'.
 function getStatus(r) {
@@ -143,18 +159,28 @@ function wireCardEvents(container) {
       if (confirm('Delete this recipe permanently?')) deleteDiscovered(btn.dataset.id);
     });
   });
+  container.querySelectorAll('.add-calendar-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof openDatePickerModal === 'function') openDatePickerModal(btn.dataset.id, btn.dataset.title);
+    });
+  });
 }
 
 function recipeCardHtml(r, context) {
   const id = r.id || r.title;
+  const titleAttr = (r.title || '').replace(/"/g, '&quot;');
+  const calendarBtn = context === 'plan'
+    ? `<button class="secondary-btn card-action-btn add-calendar-btn" data-id="${id}" data-title="${titleAttr}">📅 Add to calendar</button>`
+    : '';
   const actionBtn = context === 'plan'
-    ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>`
+    ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>${calendarBtn}`
     : `<button class="secondary-btn card-action-btn add-to-plan-btn" data-id="${id}">Add to plan</button>` +
       (r.type === 'discovered' ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>` : '');
 
   if (r.type === 'discovered') {
     return `
-      <div class="card">
+      <div class="card" data-recipe-id="${id}">
         ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb-wide" loading="lazy">` : ''}
         <div class="card-body">
           <h3>${r.title}</h3>
@@ -191,7 +217,7 @@ function recipeCardHtml(r, context) {
   const tile = `<div class="recipe-tile ${tileClass}">${r.emoji || '🍽️'}</div>`;
 
   return `
-    <div class="card">
+    <div class="card" data-recipe-id="${id}">
       ${tile}
       <div class="card-body">
         <h3>${r.title}</h3>
