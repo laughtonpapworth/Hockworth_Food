@@ -165,8 +165,8 @@ function recipeCardHtml(r, context) {
             <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
             <h4>Method</h4>
             <p>${(r.instructionsText || '').replace(/\r?\n/g, '<br>')}</p>
-            <div class="card-actions">${actionBtn}</div>
           </div>
+          <div class="card-actions">${actionBtn}</div>
         </div>
       </div>`;
   }
@@ -198,7 +198,8 @@ function recipeCardHtml(r, context) {
         <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>
         <div class="tag">${r.type}</div>
         ${daysText ? `<div class="meta">${daysText}</div>` : ''}
-        <div class="details">${body}<div class="card-actions">${actionBtn}</div></div>
+        <div class="details">${body}</div>
+        <div class="card-actions">${actionBtn}</div>
       </div>
     </div>`;
 }

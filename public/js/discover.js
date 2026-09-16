@@ -155,23 +155,30 @@ async function renderDiscoverResults(meals) {
           <ul>${ingredientsList.map(i => `<li>${i}</li>`).join('')}</ul>
           <h4>Method</h4>
           <p>${(meal.strInstructions || '').replace(/\r?\n/g, '<br>')}</p>
-          <button class="secondary-btn save-recipe-btn">Save recipe</button>
+        </div>
+        <div class="card-actions">
+          <button class="secondary-btn card-action-btn add-plan-btn">Add to plan</button>
+          <button class="secondary-btn card-action-btn add-saved-btn">Add to saved</button>
         </div>
       </div>`;
 
     card.addEventListener('click', e => {
-      if (e.target.classList.contains('save-recipe-btn')) return;
+      if (e.target.closest('.card-action-btn')) return;
       card.classList.toggle('expanded');
     });
-    card.querySelector('.save-recipe-btn').addEventListener('click', e => {
+    card.querySelector('.add-plan-btn').addEventListener('click', e => {
       e.stopPropagation();
-      saveDiscoveredRecipe(meal, ingredientsList);
+      saveDiscoveredRecipe(meal, ingredientsList, 'plan');
+    });
+    card.querySelector('.add-saved-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      saveDiscoveredRecipe(meal, ingredientsList, 'saved');
     });
     container.appendChild(card);
   });
 }
 
-function saveDiscoveredRecipe(meal, ingredientsList) {
+function saveDiscoveredRecipe(meal, ingredientsList, targetStatus) {
   const ref = window.mealAppDb ? window.mealAppDb.collection('household').doc('saved-recipes') : null;
   if (!ref) {
     alert('Sign in first so this can save to your shared plan.');
@@ -186,7 +193,17 @@ function saveDiscoveredRecipe(meal, ingredientsList) {
     savedAt: Date.now()
   };
   ref.set({ [meal.idMeal]: record }, { merge: true })
-    .then(() => alert(`Saved "${meal.strMeal}" — find it on the Saved tab — add it to the Plan from there whenever you like.`))
+    .then(() => {
+      // Discovered recipes default to 'saved' status; if the person chose
+      // "Add to plan" instead, promote it immediately via the same status
+      // system the Plan/Saved tabs use (setStatus lives in app.js, already
+      // loaded by the time this runs).
+      if (targetStatus === 'plan' && typeof setStatus === 'function') {
+        setStatus('discovered-' + meal.idMeal, 'plan');
+      }
+      const dest = targetStatus === 'plan' ? 'the Plan tab' : 'the Saved tab';
+      alert(`Added "${meal.strMeal}" — find it on ${dest}.`);
+    })
     .catch(err => {
       console.error(err);
       alert('Could not save — check your connection and try again.');
