@@ -33,6 +33,7 @@ function refreshAll() {
   renderRecipes(activeFilter ? activeFilter.dataset.filter : 'all');
   renderSaved();
   renderShoppingList(planRecipes());
+  if (typeof renderCalendar === 'function') renderCalendar();
 }
 
 function mergeDiscoveredRecipes(discovered) {
@@ -186,9 +187,12 @@ function recipeCardHtml(r, context) {
   }
 
   const personTag = r.person ? ` · ${r.person === 'his' ? 'His' : 'Her'}` : '';
+  const tileClass = r.type === 'shared' ? 'tile-shared' : r.type === 'swap' ? 'tile-swap' : 'tile-individual';
+  const tile = `<div class="recipe-tile ${tileClass}">${r.emoji || '🍽️'}</div>`;
 
   return `
     <div class="card">
+      ${tile}
       <div class="card-body">
         <h3>${r.title}</h3>
         <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>

@@ -3,11 +3,19 @@
     "id": "chickpea-spinach-curry",
     "title": "Chickpea & Spinach Coconut Curry",
     "type": "shared",
-    "days": ["Mon (wk1)", "Wed (wk2)"],
+    "days": [
+      "Mon (wk1)",
+      "Wed (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 10,
     "cookMinutes": 20,
-    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free",
+      "vegetarian"
+    ],
     "ingredients": [
       "2 tins chickpeas, drained and rinsed",
       "1 tin coconut milk",
@@ -25,17 +33,27 @@
       "Add the chickpeas, simmer uncovered 12-15 minutes, stirring occasionally, until the sauce thickens slightly.",
       "Stir in the spinach a handful at a time until wilted, about 2 minutes.",
       "Season with salt and serve over rice. If IBS is unsettled, serve a smaller chickpea portion and top up with extra sauce and rice instead."
-    ]
+    ],
+    "emoji": "\ud83c\udf5b"
   },
   {
     "id": "red-lentil-dahl",
     "title": "Red Lentil Dahl",
     "type": "shared",
-    "days": ["Wed (wk1)", "Sat (wk2)"],
+    "days": [
+      "Wed (wk1)",
+      "Sat (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 10,
     "cookMinutes": 25,
-    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian", "low-fodmap"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free",
+      "vegetarian",
+      "low-fodmap"
+    ],
     "ingredients": [
       "250g red lentils, rinsed",
       "1 tin chopped tomatoes",
@@ -54,17 +72,26 @@
       "Simmer uncovered 18-20 minutes, stirring occasionally, until the lentils are soft and the mixture has thickened.",
       "Stir in the spinach or kale for the final 2 minutes until wilted.",
       "Season with salt and serve over rice."
-    ]
+    ],
+    "emoji": "\ud83c\udf72"
   },
   {
     "id": "quinoa-black-bean-peppers",
     "title": "Quinoa & Black Bean Stuffed Peppers",
     "type": "shared",
-    "days": ["Sat (wk1)", "Mon (wk2)"],
+    "days": [
+      "Sat (wk1)",
+      "Mon (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 15,
     "cookMinutes": 25,
-    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free",
+      "vegetarian"
+    ],
     "ingredients": [
       "200g quinoa",
       "1 tin black beans, drained and rinsed",
@@ -82,17 +109,25 @@
       "Arrange pepper halves cut-side up in a baking dish, drizzle with remaining oil.",
       "Spoon the quinoa mixture into each pepper half, pressing down gently.",
       "Cover loosely with foil, bake 20 minutes, then uncover and bake a further 5 minutes."
-    ]
+    ],
+    "emoji": "\ud83e\uded1"
   },
   {
     "id": "mince-stir-fry",
     "title": "Mince Stir-Fry",
     "type": "swap",
-    "days": ["Tue (wk1)", "Sun (wk2)"],
+    "days": [
+      "Tue (wk1)",
+      "Sun (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 10,
     "cookMinutes": 15,
-    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free"
+    ],
     "baseIngredients": [
       "300g frozen stir-fry veg (or sliced carrots + peppers)",
       "3 tbsp coconut aminos",
@@ -117,17 +152,25 @@
           "Stir in the remaining coconut aminos, cook 1 minute, serve over rice."
         ]
       }
-    }
+    },
+    "emoji": "\ud83e\udd58"
   },
   {
     "id": "sheet-pan-roast",
     "title": "Sheet Pan Roast",
     "type": "swap",
-    "days": ["Thu (wk1)", "Tue (wk2)"],
+    "days": [
+      "Thu (wk1)",
+      "Tue (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 10,
     "cookMinutes": 35,
-    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free"
+    ],
     "baseIngredients": [
       "Broccoli or green beans",
       "1 large sweet potato, cubed",
@@ -152,17 +195,25 @@
           "Roast until lightly golden at the edges."
         ]
       }
-    }
+    },
+    "emoji": "\ud83c\udf57"
   },
   {
     "id": "garlic-oil-pan-fry",
     "title": "Garlic-Infused Oil Pan-Fry",
     "type": "swap",
-    "days": ["Sun (wk1)", "Thu (wk2)"],
+    "days": [
+      "Sun (wk1)",
+      "Thu (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 5,
     "cookMinutes": 10,
-    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free"
+    ],
     "baseIngredients": [
       "Garlic-infused oil, 1 lemon, chilli flakes, rice to serve"
     ],
@@ -186,18 +237,25 @@
           "Squeeze over lemon and chilli flakes, serve over rice."
         ]
       }
-    }
+    },
+    "emoji": "\ud83c\udf64"
   },
   {
     "id": "option-a-his-salmon",
     "title": "Baked Salmon + Roasted Veg",
     "type": "individual",
     "person": "his",
-    "days": ["Fri (wk1)"],
+    "days": [
+      "Fri (wk1)"
+    ],
     "servings": 2,
     "prepMinutes": 5,
     "cookMinutes": 18,
-    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free"
+    ],
     "ingredients": [
       "2 salmon fillets",
       "Asparagus or green beans",
@@ -210,18 +268,26 @@
       "Place salmon and asparagus/green beans on a lined tray, drizzle with olive oil, season with salt.",
       "Squeeze half a lemon over the top, tuck the other half's slices among the salmon.",
       "Roast 15-18 minutes until the salmon flakes easily with a fork."
-    ]
+    ],
+    "emoji": "\ud83d\udc1f"
   },
   {
     "id": "option-a-hers-eggs",
     "title": "Baked Eggs in Tomato Sauce (Shakshuka-style)",
     "type": "individual",
     "person": "hers",
-    "days": ["Fri (wk1)"],
+    "days": [
+      "Fri (wk1)"
+    ],
     "servings": 2,
     "prepMinutes": 5,
     "cookMinutes": 20,
-    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free",
+      "vegetarian"
+    ],
     "ingredients": [
       "4 eggs",
       "1 tin chopped tomatoes",
@@ -238,18 +304,25 @@
       "Make 4 small wells in the sauce, crack an egg into each.",
       "Cover, cook 6-8 minutes over low-medium heat until whites are set and yolks still soft.",
       "Serve with wheat-free bread or flatbread."
-    ]
+    ],
+    "emoji": "\ud83c\udf73"
   },
   {
     "id": "option-b-his-chilli",
     "title": "Turkey Mince Chilli",
     "type": "individual",
     "person": "his",
-    "days": ["Fri (wk2)"],
+    "days": [
+      "Fri (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 10,
     "cookMinutes": 20,
-    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free"
+    ],
     "ingredients": [
       "300g turkey mince",
       "1 tin chopped tomatoes",
@@ -265,18 +338,26 @@
       "Add chilli powder and cumin, stir 30 seconds.",
       "Add tomatoes and beans, bring to a simmer.",
       "Simmer uncovered 15-20 minutes until thickened. Serve over rice, keeping the bean portion modest if IBS is unsettled."
-    ]
+    ],
+    "emoji": "\ud83c\udf36\ufe0f"
   },
   {
     "id": "option-b-hers-stew",
     "title": "Butter Bean & Kale Stew",
     "type": "individual",
     "person": "hers",
-    "days": ["Fri (wk2)"],
+    "days": [
+      "Fri (wk2)"
+    ],
     "servings": 4,
     "prepMinutes": 5,
     "cookMinutes": 20,
-    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "tags": [
+      "wheat-free",
+      "dairy-free",
+      "soy-free",
+      "vegetarian"
+    ],
     "ingredients": [
       "2 tins butter beans, drained and rinsed",
       "1 tin chopped tomatoes",
@@ -290,6 +371,7 @@
       "Add tomatoes and butter beans, bring to a simmer.",
       "Simmer uncovered 15 minutes, mashing a few beans against the side of the pot to thicken.",
       "Stir in kale for the final 3-4 minutes until wilted. Season and serve, with rice if you like."
-    ]
+    ],
+    "emoji": "\ud83e\uded8"
   }
 ]
