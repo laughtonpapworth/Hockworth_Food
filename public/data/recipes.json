@@ -1,0 +1,295 @@
+[
+  {
+    "id": "chickpea-spinach-curry",
+    "title": "Chickpea & Spinach Coconut Curry",
+    "type": "shared",
+    "days": ["Mon (wk1)", "Wed (wk2)"],
+    "servings": 4,
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "ingredients": [
+      "2 tins chickpeas, drained and rinsed",
+      "1 tin coconut milk",
+      "1 tin chopped tomatoes",
+      "200g spinach",
+      "2 tbsp dry curry powder",
+      "1 tsp grated fresh ginger",
+      "2 tbsp garlic-infused oil",
+      "Salt, to taste; rice to serve"
+    ],
+    "instructions": [
+      "Heat the garlic-infused oil in a large pan over medium heat.",
+      "Add the curry powder and ginger, stir for 30 seconds until fragrant.",
+      "Add the tomatoes and coconut milk, stir to combine, bring to a gentle simmer.",
+      "Add the chickpeas, simmer uncovered 12-15 minutes, stirring occasionally, until the sauce thickens slightly.",
+      "Stir in the spinach a handful at a time until wilted, about 2 minutes.",
+      "Season with salt and serve over rice. If IBS is unsettled, serve a smaller chickpea portion and top up with extra sauce and rice instead."
+    ]
+  },
+  {
+    "id": "red-lentil-dahl",
+    "title": "Red Lentil Dahl",
+    "type": "shared",
+    "days": ["Wed (wk1)", "Sat (wk2)"],
+    "servings": 4,
+    "prepMinutes": 10,
+    "cookMinutes": 25,
+    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian", "low-fodmap"],
+    "ingredients": [
+      "250g red lentils, rinsed",
+      "1 tin chopped tomatoes",
+      "2 carrots, diced",
+      "100g spinach or kale",
+      "1 tsp turmeric",
+      "1 tsp cumin",
+      "2 tbsp garlic-infused oil",
+      "700ml water or wheat/soy-free stock",
+      "Salt, to taste; rice to serve"
+    ],
+    "instructions": [
+      "Heat the oil in a large pot, add the turmeric and cumin, stir 30 seconds.",
+      "Add the carrots, cook 3-4 minutes to soften slightly.",
+      "Add the lentils, tomatoes, and water or stock. Bring to the boil, then reduce to a simmer.",
+      "Simmer uncovered 18-20 minutes, stirring occasionally, until the lentils are soft and the mixture has thickened.",
+      "Stir in the spinach or kale for the final 2 minutes until wilted.",
+      "Season with salt and serve over rice."
+    ]
+  },
+  {
+    "id": "quinoa-black-bean-peppers",
+    "title": "Quinoa & Black Bean Stuffed Peppers",
+    "type": "shared",
+    "days": ["Sat (wk1)", "Mon (wk2)"],
+    "servings": 4,
+    "prepMinutes": 15,
+    "cookMinutes": 25,
+    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "ingredients": [
+      "200g quinoa",
+      "1 tin black beans, drained and rinsed",
+      "150g sweetcorn",
+      "4 peppers, halved and deseeded",
+      "1 tsp cumin",
+      "1 tsp smoked paprika",
+      "2 tbsp olive oil",
+      "Salt"
+    ],
+    "instructions": [
+      "Preheat the oven to 190C (170C fan) / Gas Mark 5.",
+      "Cook the quinoa according to packet instructions, then drain and set aside.",
+      "Mix cooked quinoa with black beans, sweetcorn, cumin, smoked paprika, 1 tbsp oil, and salt.",
+      "Arrange pepper halves cut-side up in a baking dish, drizzle with remaining oil.",
+      "Spoon the quinoa mixture into each pepper half, pressing down gently.",
+      "Cover loosely with foil, bake 20 minutes, then uncover and bake a further 5 minutes."
+    ]
+  },
+  {
+    "id": "mince-stir-fry",
+    "title": "Mince Stir-Fry",
+    "type": "swap",
+    "days": ["Tue (wk1)", "Sun (wk2)"],
+    "servings": 4,
+    "prepMinutes": 10,
+    "cookMinutes": 15,
+    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "baseIngredients": [
+      "300g frozen stir-fry veg (or sliced carrots + peppers)",
+      "3 tbsp coconut aminos",
+      "1 tsp grated fresh ginger",
+      "2 tbsp garlic-infused oil",
+      "Rice to serve"
+    ],
+    "variants": {
+      "his": {
+        "protein": "300g turkey mince",
+        "instructions": [
+          "Heat 1 tbsp oil in a pan, brown the mince 6-7 minutes, breaking it up as it cooks.",
+          "Add half the veg and half the ginger, cook 3-4 minutes until just tender.",
+          "Stir in half the coconut aminos, cook 1 minute, serve over rice."
+        ]
+      },
+      "hers": {
+        "protein": "2 x 250g pouches cooked puy or green lentils",
+        "instructions": [
+          "Heat 1 tbsp oil in a second pan, add the lentils, heat through 2-3 minutes.",
+          "Add the remaining veg and ginger, cook 3-4 minutes until just tender.",
+          "Stir in the remaining coconut aminos, cook 1 minute, serve over rice."
+        ]
+      }
+    }
+  },
+  {
+    "id": "sheet-pan-roast",
+    "title": "Sheet Pan Roast",
+    "type": "swap",
+    "days": ["Thu (wk1)", "Tue (wk2)"],
+    "servings": 4,
+    "prepMinutes": 10,
+    "cookMinutes": 35,
+    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "baseIngredients": [
+      "Broccoli or green beans",
+      "1 large sweet potato, cubed",
+      "Olive oil, paprika, salt, pepper"
+    ],
+    "instructions": [
+      "Preheat the oven to 200C (180C fan) / Gas Mark 6.",
+      "Toss the sweet potato and broccoli or green beans in olive oil, paprika, salt and pepper on a large tray."
+    ],
+    "variants": {
+      "his": {
+        "protein": "4 chicken thighs",
+        "instructions": [
+          "Place on one half of the tray, roast 30-35 minutes until cooked through.",
+          "Rest 5 minutes before serving."
+        ]
+      },
+      "hers": {
+        "protein": "1 tin butter beans, drained and patted dry",
+        "instructions": [
+          "Toss in a little oil and paprika, add to the tray for the final 15-18 minutes only.",
+          "Roast until lightly golden at the edges."
+        ]
+      }
+    }
+  },
+  {
+    "id": "garlic-oil-pan-fry",
+    "title": "Garlic-Infused Oil Pan-Fry",
+    "type": "swap",
+    "days": ["Sun (wk1)", "Thu (wk2)"],
+    "servings": 4,
+    "prepMinutes": 5,
+    "cookMinutes": 10,
+    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "baseIngredients": [
+      "Garlic-infused oil, 1 lemon, chilli flakes, rice to serve"
+    ],
+    "instructions": [
+      "Cook the rice according to packet instructions."
+    ],
+    "variants": {
+      "his": {
+        "protein": "300g raw prawns",
+        "instructions": [
+          "Heat 1 tbsp oil in a pan over medium-high heat.",
+          "Add prawns, cook 2-3 minutes per side until pink and opaque.",
+          "Squeeze over lemon and chilli flakes, serve over rice."
+        ]
+      },
+      "hers": {
+        "protein": "1 tin cannellini beans, drained and patted dry",
+        "instructions": [
+          "Heat 1 tbsp oil in a second pan over medium-high heat.",
+          "Add the beans, cook 6-8 minutes, turning occasionally, until golden and crisp at the edges.",
+          "Squeeze over lemon and chilli flakes, serve over rice."
+        ]
+      }
+    }
+  },
+  {
+    "id": "option-a-his-salmon",
+    "title": "Baked Salmon + Roasted Veg",
+    "type": "individual",
+    "person": "his",
+    "days": ["Fri (wk1)"],
+    "servings": 2,
+    "prepMinutes": 5,
+    "cookMinutes": 18,
+    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "ingredients": [
+      "2 salmon fillets",
+      "Asparagus or green beans",
+      "1 lemon",
+      "1 tbsp olive oil",
+      "Salt"
+    ],
+    "instructions": [
+      "Preheat oven to 200C (180C fan) / Gas Mark 6.",
+      "Place salmon and asparagus/green beans on a lined tray, drizzle with olive oil, season with salt.",
+      "Squeeze half a lemon over the top, tuck the other half's slices among the salmon.",
+      "Roast 15-18 minutes until the salmon flakes easily with a fork."
+    ]
+  },
+  {
+    "id": "option-a-hers-eggs",
+    "title": "Baked Eggs in Tomato Sauce (Shakshuka-style)",
+    "type": "individual",
+    "person": "hers",
+    "days": ["Fri (wk1)"],
+    "servings": 2,
+    "prepMinutes": 5,
+    "cookMinutes": 20,
+    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "ingredients": [
+      "4 eggs",
+      "1 tin chopped tomatoes",
+      "1 pepper, sliced",
+      "2 tbsp garlic-infused oil",
+      "1 tsp smoked paprika",
+      "1 tsp cumin",
+      "Wheat-free bread or flatbread to serve"
+    ],
+    "instructions": [
+      "Heat oil in a wide pan, add sliced pepper, cook 4-5 minutes until softening.",
+      "Add smoked paprika and cumin, stir 30 seconds.",
+      "Add chopped tomatoes, simmer 8-10 minutes until slightly thickened.",
+      "Make 4 small wells in the sauce, crack an egg into each.",
+      "Cover, cook 6-8 minutes over low-medium heat until whites are set and yolks still soft.",
+      "Serve with wheat-free bread or flatbread."
+    ]
+  },
+  {
+    "id": "option-b-his-chilli",
+    "title": "Turkey Mince Chilli",
+    "type": "individual",
+    "person": "his",
+    "days": ["Fri (wk2)"],
+    "servings": 4,
+    "prepMinutes": 10,
+    "cookMinutes": 20,
+    "tags": ["wheat-free", "dairy-free", "soy-free"],
+    "ingredients": [
+      "300g turkey mince",
+      "1 tin chopped tomatoes",
+      "1 tin black beans, drained and rinsed",
+      "1 tin kidney beans, drained and rinsed",
+      "1 tsp chilli powder",
+      "1 tsp cumin",
+      "2 tbsp garlic-infused oil",
+      "Rice to serve"
+    ],
+    "instructions": [
+      "Heat oil in a large pot, brown the mince, 6-7 minutes.",
+      "Add chilli powder and cumin, stir 30 seconds.",
+      "Add tomatoes and beans, bring to a simmer.",
+      "Simmer uncovered 15-20 minutes until thickened. Serve over rice, keeping the bean portion modest if IBS is unsettled."
+    ]
+  },
+  {
+    "id": "option-b-hers-stew",
+    "title": "Butter Bean & Kale Stew",
+    "type": "individual",
+    "person": "hers",
+    "days": ["Fri (wk2)"],
+    "servings": 4,
+    "prepMinutes": 5,
+    "cookMinutes": 20,
+    "tags": ["wheat-free", "dairy-free", "soy-free", "vegetarian"],
+    "ingredients": [
+      "2 tins butter beans, drained and rinsed",
+      "1 tin chopped tomatoes",
+      "100g kale",
+      "1 tsp smoked paprika",
+      "2 tbsp garlic-infused oil",
+      "Salt"
+    ],
+    "instructions": [
+      "Heat oil in a pot, add smoked paprika, stir 30 seconds.",
+      "Add tomatoes and butter beans, bring to a simmer.",
+      "Simmer uncovered 15 minutes, mashing a few beans against the side of the pot to thicken.",
+      "Stir in kale for the final 3-4 minutes until wilted. Season and serve, with rice if you like."
+    ]
+  }
+]

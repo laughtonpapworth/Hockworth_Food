@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Anonymous auth (set up in firebase-config.js) means both your phones
+    // sign in silently and get an auth token, without either of you needing
+    // a password. This rule just requires *some* signed-in identity.
+    match /household/{docId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "profiles": {
+    "his": {
+      "label": "Him",
+      "allergens": {
+        "description": "Wheat allergy - hard no if present",
+        "terms": [
+          "wheat", "wheat flour", "wheatgerm", "wheat starch", "durum",
+          "semolina", "spelt", "farro", "bulgur", "couscous",
+          "barley", "rye", "malt", "malt extract", "malt vinegar",
+          "brewer's yeast", "gluten"
+        ]
+      },
+      "caution": {
+        "description": "Common IBS / high-FODMAP triggers - moderate rather than avoid entirely",
+        "terms": [
+          "onion", "onion powder", "garlic", "garlic powder",
+          "inulin", "chicory root", "honey", "high fructose corn syrup",
+          "high-fructose corn syrup", "fructose", "sorbitol", "mannitol",
+          "xylitol", "isomalt", "agave", "soya bean", "soybean"
+        ]
+      }
+    },
+    "hers": {
+      "label": "Her",
+      "allergens": {
+        "description": "Dairy and soy free for baby's suspected CMPA - hard no if present",
+        "terms": [
+          "milk", "milk powder", "skimmed milk", "whole milk", "buttermilk",
+          "butter", "ghee", "cream", "double cream", "single cream",
+          "cheese", "whey", "whey protein", "casein", "caseinate",
+          "lactose", "yoghurt", "yogurt", "custard",
+          "soya", "soy", "soybean", "soya bean", "soy protein",
+          "soy lecithin", "soya lecithin", "hydrolysed soy protein",
+          "hydrolyzed soy protein", "tofu", "tempeh", "edamame", "miso"
+        ]
+      },
+      "caution": {
+        "description": "Not a formal restriction, but flagged for awareness",
+        "terms": []
+      }
+    }
+  },
+  "notes": [
+    "This is a simple text-match checker, not a medical device. Always read the actual label if there is any doubt.",
+    "Soy lecithin and 'may contain traces of milk/soya' warnings are treated as allergen hits here - use the manual override if you've separately confirmed a product is safe.",
+    "FODMAP triggers are shown as a caution, not a block, since tolerance is dose-dependent and personal."
+  ]
+}

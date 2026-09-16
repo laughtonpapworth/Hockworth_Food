@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Our Meal Plan</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4a7c59">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="app-header">
+  <h1>🍽️ Our Meal Plan</h1>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="recipes">Recipes</button>
+    <button class="tab-btn" data-tab="shopping">Shopping List</button>
+    <button class="tab-btn" data-tab="checker">Checker</button>
+  </nav>
+</header>
+
+<main>
+  <section id="recipes" class="tab-panel active">
+    <div class="filter-row">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="shared">Shared</button>
+      <button class="filter-btn" data-filter="swap">Swap</button>
+      <button class="filter-btn" data-filter="individual">Individual</button>
+    </div>
+    <div id="recipe-list" class="card-list"></div>
+  </section>
+
+  <section id="shopping" class="tab-panel">
+    <div class="note">Ticks sync live between both your phones via Firestore, once you've added your Firebase config (see README). Until then it falls back to saving on this device only.</div>
+    <button id="reset-shopping" class="secondary-btn">Reset list</button>
+    <div id="shopping-list" class="card-list"></div>
+  </section>
+
+  <section id="checker" class="tab-panel">
+    <div class="note">Paste an ingredients list, or scan a barcode, to check it against both your restrictions. This is a simple text match, not a medical device — always check the label yourself if in doubt.</div>
+
+    <div class="checker-box">
+      <button id="scan-btn" class="primary-btn">📷 Scan a barcode</button>
+      <div id="reader" class="scanner-frame" style="display:none;"></div>
+      <div id="scan-status" class="muted"></div>
+    </div>
+
+    <div class="checker-box">
+      <label for="manual-input">Or paste ingredients manually</label>
+      <textarea id="manual-input" rows="3" placeholder="e.g. wheat flour, sugar, vegetable oil, soya lecithin..."></textarea>
+      <button id="check-manual" class="secondary-btn">Check ingredients</button>
+    </div>
+
+    <div id="verdict" class="verdict-box" style="display:none;"></div>
+  </section>
+</main>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/checker.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js').catch(err => console.error('SW registration failed', err));
+  });
+}
+</script>
+</body>
+</html>
