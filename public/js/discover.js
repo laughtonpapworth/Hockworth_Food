@@ -4,15 +4,53 @@ document.getElementById('discover-search-btn').addEventListener('click', searchB
 document.getElementById('discover-ingredient-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchByIngredient();
 });
-document.getElementById('discover-random-btn').addEventListener('click', fetchRandom);
+document.getElementById('discover-random-btn').addEventListener('click', fetchRandomBatch);
 
 function setDiscoverStatus(text) {
   document.getElementById('discover-status').textContent = text;
 }
 
+// ---- Category chips ----
+fetch(`${MEALDB_BASE}/categories.php`)
+  .then(r => r.json())
+  .then(data => {
+    const categories = (data.categories || []).filter(c => c.strCategory !== 'Beef');
+    const chipRow = document.getElementById('category-chips');
+    chipRow.innerHTML = categories.map(c =>
+      `<button class="filter-btn category-chip" data-category="${c.strCategory}">${c.strCategory}</button>`
+    ).join('');
+    chipRow.querySelectorAll('.category-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        chipRow.querySelectorAll('.category-chip').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        searchByCategory(btn.dataset.category);
+      });
+    });
+  })
+  .catch(err => console.error('Could not load categories', err));
+
+async function searchByCategory(category) {
+  setDiscoverStatus('Loading ' + category + ' recipes...');
+  document.getElementById('discover-results').innerHTML = '';
+  try {
+    const res = await fetch(`${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`);
+    const data = await res.json();
+    if (!data.meals) { setDiscoverStatus('Nothing found in that category.'); return; }
+    const top = data.meals.slice(0, 12);
+    const full = await Promise.all(top.map(m => fetchMealDetail(m.idMeal)));
+    const results = full.filter(Boolean);
+    setDiscoverStatus(`${results.length} ${category} recipes — checked against both your restrictions.`);
+    renderDiscoverResults(results);
+  } catch (err) {
+    console.error(err);
+    setDiscoverStatus('Search failed — check your connection and try again.');
+  }
+}
+
 async function searchByIngredient() {
   const ingredient = document.getElementById('discover-ingredient-input').value.trim();
   if (!ingredient) return;
+  clearCategoryChips();
   setDiscoverStatus('Searching...');
   document.getElementById('discover-results').innerHTML = '';
   try {
@@ -22,29 +60,43 @@ async function searchByIngredient() {
       setDiscoverStatus('No recipes found containing that ingredient — try a simpler term (e.g. "chicken" not "chicken thighs").');
       return;
     }
-    // Fetch full detail (ingredients + method) for the first handful of matches.
-    const top = data.meals.slice(0, 8);
+    const top = data.meals.slice(0, 12);
     const full = await Promise.all(top.map(m => fetchMealDetail(m.idMeal)));
-    setDiscoverStatus(`${full.filter(Boolean).length} recipes found — checked against both your restrictions below.`);
-    renderDiscoverResults(full.filter(Boolean));
+    const results = full.filter(Boolean);
+    setDiscoverStatus(`${results.length} recipes found — checked against both your restrictions below.`);
+    renderDiscoverResults(results);
   } catch (err) {
     console.error(err);
     setDiscoverStatus('Search failed — check your connection and try again.');
   }
 }
 
-async function fetchRandom() {
-  setDiscoverStatus('Finding something...');
+// Fetches a genuine batch of different random recipes (TheMealDB's random
+// endpoint only ever returns one at a time, so this fires several requests
+// in parallel and de-duplicates the results).
+async function fetchRandomBatch() {
+  clearCategoryChips();
+  setDiscoverStatus('Finding some ideas...');
   document.getElementById('discover-results').innerHTML = '';
   try {
-    const res = await fetch(`${MEALDB_BASE}/random.php`);
-    const data = await res.json();
-    setDiscoverStatus('');
-    renderDiscoverResults(data.meals || []);
+    const calls = Array.from({ length: 12 }, () => fetch(`${MEALDB_BASE}/random.php`).then(r => r.json()));
+    const results = await Promise.all(calls);
+    const seen = new Set();
+    const meals = [];
+    results.forEach(r => {
+      const meal = r.meals && r.meals[0];
+      if (meal && !seen.has(meal.idMeal)) { seen.add(meal.idMeal); meals.push(meal); }
+    });
+    setDiscoverStatus(`${meals.length} ideas — checked against both your restrictions below.`);
+    renderDiscoverResults(meals);
   } catch (err) {
     console.error(err);
     setDiscoverStatus('Search failed — check your connection and try again.');
   }
+}
+
+function clearCategoryChips() {
+  document.querySelectorAll('.category-chip').forEach(b => b.classList.remove('active'));
 }
 
 async function fetchMealDetail(id) {
@@ -70,7 +122,7 @@ function extractIngredientsList(meal) {
 async function renderDiscoverResults(meals) {
   const container = document.getElementById('discover-results');
   container.innerHTML = '';
-  try { await window.rulesReady; } catch { /* checker unavailable, still show recipes without badges */ }
+  try { await window.rulesReady; } catch { /* still show recipes without badges */ }
 
   meals.forEach(meal => {
     const ingredientsList = extractIngredientsList(meal);
@@ -81,28 +133,30 @@ async function renderDiscoverResults(meals) {
         const verdict = checkIngredients(ingredientsText);
         badges = Object.values(verdict).map(r => {
           const icon = r.status === 'ok' ? '✅' : r.status === 'warn' ? '⚠️' : '❌';
-          return `<span class="badge">${icon} ${r.label}</span>`;
-        }).join(' ');
+          const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-bad';
+          return `<span class="badge ${cls}">${icon} ${r.label}</span>`;
+        }).join('');
       } catch (e) { console.error(e); }
+    }
+    if (/\bbeef\b/i.test(ingredientsText)) {
+      badges += `<span class="badge badge-note">🥩 Contains beef</span>`;
     }
 
     const card = document.createElement('div');
     card.className = 'card discover-card';
     card.innerHTML = `
-      <div class="discover-card-top">
-        <img src="${meal.strMealThumb}" alt="" class="discover-thumb" loading="lazy">
-        <div>
-          <h3>${meal.strMeal}</h3>
-          <div class="meta">${meal.strCategory || ''}${meal.strArea ? ' · ' + meal.strArea : ''}</div>
-          <div class="badges">${badges}</div>
+      <img src="${meal.strMealThumb}" alt="" class="discover-thumb-wide" loading="lazy">
+      <div class="card-body">
+        <h3>${meal.strMeal}</h3>
+        <div class="meta">${meal.strCategory || ''}${meal.strArea ? ' · ' + meal.strArea : ''}</div>
+        <div class="badges">${badges}</div>
+        <div class="details">
+          <h4>Ingredients</h4>
+          <ul>${ingredientsList.map(i => `<li>${i}</li>`).join('')}</ul>
+          <h4>Method</h4>
+          <p>${(meal.strInstructions || '').replace(/\r?\n/g, '<br>')}</p>
+          <button class="secondary-btn save-recipe-btn">Save to our plan</button>
         </div>
-      </div>
-      <div class="details">
-        <h4>Ingredients</h4>
-        <ul>${ingredientsList.map(i => `<li>${i}</li>`).join('')}</ul>
-        <h4>Method</h4>
-        <p>${(meal.strInstructions || '').replace(/\r?\n/g, '<br>')}</p>
-        <button class="secondary-btn save-recipe-btn">Save to our plan</button>
       </div>`;
 
     card.addEventListener('click', e => {
@@ -132,7 +186,7 @@ function saveDiscoveredRecipe(meal, ingredientsList) {
     savedAt: Date.now()
   };
   ref.set({ [meal.idMeal]: record }, { merge: true })
-    .then(() => alert(`Saved "${meal.strMeal}" — find it under the Discovered filter on the Recipes tab.`))
+    .then(() => alert(`Saved "${meal.strMeal}" — find it under the Saved filter on the Plan tab.`))
     .catch(err => {
       console.error(err);
       alert('Could not save — check your connection and try again.');
@@ -161,8 +215,6 @@ function loadSavedRecipes() {
   }, err => console.error('Could not load saved recipes', err));
 }
 
-// Wait for firebase-config.js's auth flow to resolve before subscribing,
-// since Firestore rules require a signed-in, allow-listed account.
 if (window.mealAppAuth) {
   window.mealAppAuth.onAuthStateChanged(user => { if (user) loadSavedRecipes(); });
 }

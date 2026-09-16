@@ -1,4 +1,4 @@
-const CACHE_NAME = 'meal-plan-v1';
+const CACHE_NAME = 'meal-plan-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -26,12 +26,21 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Cache-first for app shell, network-first for everything else (e.g. Open Food Facts lookups)
+// Network-first for the app shell: always tries to fetch the latest version
+// first, and only serves the cached copy if there's no connection. This
+// means a normal page refresh always shows the newest deploy — the cache
+// exists purely as an offline fallback, not to speed up normal loads.
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (APP_SHELL.some(path => url.pathname === path)) {
     event.respondWith(
-      caches.match(event.request).then(cached => cached || fetch(event.request))
+      fetch(event.request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
     );
   }
 });

@@ -1,109 +1,165 @@
 :root{
-  --bg:#fdfcfa; --text:#2b2a28; --muted:#6b6862; --card:#ffffff;
-  --border:#e8e4dc; --accent:#4a7c59; --accent-bg:#eaf2ec;
+  --bg:#f7f6f2; --text:#232220; --muted:#75716a; --card:#ffffff;
+  --border:#e9e6dd; --accent:#3f7a5c; --accent-dark:#2f5c46; --accent-bg:#e5f0e9;
   --his:#3f6fa8; --his-bg:#e8f0f9; --hers:#a8527e; --hers-bg:#f8e9f0;
-  --ok:#3a8a4f; --ok-bg:#e7f5ea; --warn:#c98a1f; --warn-bg:#fbf1de; --bad:#c0392b; --bad-bg:#fbe9e7;
+  --ok:#2f8a4f; --ok-bg:#e5f5ea; --warn:#b97a1a; --warn-bg:#faf0dc; --bad:#c0392b; --bad-bg:#fbe9e7;
+  --note-bg:#f0ede2; --note-text:#6b6350;
+  --shadow: 0 1px 3px rgba(30,28,20,0.06), 0 1px 2px rgba(30,28,20,0.08);
+  --radius: 16px;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --bg:#1c1b19; --text:#ece9e3; --muted:#a8a29a; --card:#252420;
-    --border:#3a382f; --accent:#7bb890; --accent-bg:#243128;
+    --bg:#17181a; --text:#eeece6; --muted:#a3a099; --card:#212224;
+    --border:#33352f; --accent:#6bb78e; --accent-dark:#8fd0ac; --accent-bg:#1c2e24;
     --his:#7fb0e0; --his-bg:#1e2a36; --hers:#e08ab5; --hers-bg:#33202a;
-    --ok:#7bb890; --ok-bg:#1e2f22; --warn:#e0b055; --warn-bg:#332a18; --bad:#e08a7d; --bad-bg:#331e1a;
+    --ok:#6bb78e; --ok-bg:#1c2e24; --warn:#e0b055; --warn-bg:#332a18; --bad:#e08a7d; --bad-bg:#331e1a;
+    --note-bg:#252620; --note-text:#c9c4b5;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
 }
 *{box-sizing:border-box;}
 body{
   margin:0; background:var(--bg); color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-  line-height:1.5; padding-bottom:40px;
+  font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  line-height:1.5; padding-bottom:84px; -webkit-font-smoothing:antialiased;
 }
-.app-header{
-  position:sticky; top:0; background:var(--bg); z-index:10;
-  border-bottom:1px solid var(--border); padding:12px 16px 0;
-}
-.app-header h1{font-size:1.2rem; margin:0 0 10px;}
-.header-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-.signout-btn{
-  background:none; border:1px solid var(--border); color:var(--muted);
-  border-radius:20px; padding:4px 12px; font-size:0.72rem; cursor:pointer;
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;
-}
+
+/* ---- Sign-in screen ---- */
 .signin-screen{
   min-height:100vh; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; text-align:center; padding:24px; gap:14px;
+  justify-content:center; text-align:center; padding:24px; gap:12px; background:var(--bg);
 }
-.signin-screen h2{margin:0; font-size:1.3rem;}
-.signin-screen .primary-btn{width:auto; padding:12px 24px;}
-.tabs{display:flex; gap:4px;}
-.tab-btn{
-  flex:1; background:none; border:none; padding:10px 0; font-size:0.9rem;
-  color:var(--muted); border-bottom:2px solid transparent; cursor:pointer;
+.signin-emoji{font-size:3rem;}
+.signin-screen h2{margin:0; font-size:1.5rem; font-weight:800;}
+.signin-screen .muted{max-width:280px;}
+.signin-screen .primary-btn{width:auto; padding:13px 28px; margin-top:8px;}
+.signin-error{color:var(--bad); font-size:0.85rem; max-width:280px;}
+
+/* ---- Header ---- */
+.app-header{
+  position:sticky; top:0; background:var(--bg); z-index:10;
+  border-bottom:1px solid var(--border); padding:16px 18px;
 }
-.tab-btn.active{color:var(--accent); border-bottom-color:var(--accent); font-weight:600;}
-main{max-width:700px; margin:0 auto; padding:16px;}
+.header-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.app-header h1{font-size:1.25rem; margin:0; font-weight:800; letter-spacing:-0.01em;}
+.signout-btn{
+  background:var(--card); border:1px solid var(--border); color:var(--muted);
+  border-radius:20px; padding:6px 14px; font-size:0.72rem; cursor:pointer;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;
+}
+
+main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
+.section-title{font-size:1.4rem; font-weight:800; margin:4px 0 14px; letter-spacing:-0.01em;}
+
+/* ---- Filter chips ---- */
 .filter-row{display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap;}
 .filter-btn{
   border:1px solid var(--border); background:var(--card); color:var(--text);
-  border-radius:20px; padding:5px 14px; font-size:0.82rem; cursor:pointer;
+  border-radius:20px; padding:7px 15px; font-size:0.83rem; cursor:pointer;
+  font-family:inherit; font-weight:500; transition:all 0.15s;
 }
-.filter-btn.active{background:var(--accent-bg); border-color:var(--accent); color:var(--accent);}
+.filter-btn.active{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+
+/* ---- Cards ---- */
 .card-list{display:flex; flex-direction:column; gap:12px;}
+.card-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px;}
 .card{
-  background:var(--card); border:1px solid var(--border); border-radius:12px;
-  padding:14px 16px; cursor:pointer;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+  box-shadow:var(--shadow); cursor:pointer; overflow:hidden; transition:transform 0.15s;
 }
-.card h3{margin:0 0 4px; font-size:1rem;}
+.card-body{padding:14px 16px;}
+.card h3{margin:0 0 4px; font-size:1.02rem; font-weight:700;}
 .card .meta{color:var(--muted); font-size:0.82rem;}
 .card .tag{
-  display:inline-block; font-size:0.7rem; padding:2px 8px; border-radius:20px;
-  background:var(--accent-bg); color:var(--accent); margin-top:6px; font-weight:600;
+  display:inline-block; font-size:0.7rem; padding:3px 10px; border-radius:20px;
+  background:var(--accent-bg); color:var(--accent-dark); margin-top:8px; font-weight:700;
+  text-transform:uppercase; letter-spacing:0.03em;
 }
-.card .details{display:none; margin-top:10px; font-size:0.9rem;}
+.card .details{display:none; margin-top:12px; font-size:0.9rem;}
 .card.expanded .details{display:block;}
-.card h4{font-size:0.78rem; text-transform:uppercase; letter-spacing:0.03em; color:var(--muted); margin:10px 0 4px;}
+.card h4{font-size:0.75rem; text-transform:uppercase; letter-spacing:0.04em; color:var(--muted); margin:12px 0 6px; font-weight:700;}
 .card ul, .card ol{margin:4px 0 4px 18px; padding:0;}
-.card li{margin-bottom:3px;}
-.who{border-radius:8px; padding:10px 12px; margin-top:8px; font-size:0.88rem;}
+.card li{margin-bottom:4px;}
+
+/* Non-grid recipe cards (built-in plan) get padding directly since they have no image */
+#recipe-list .card:not(.discover-card), #discover-results .card:not(.discover-card){padding:16px 18px;}
+
+.who{border-radius:10px; padding:10px 12px; margin-top:8px; font-size:0.88rem;}
 .who.his{background:var(--his-bg); color:var(--his);}
 .who.hers{background:var(--hers-bg); color:var(--hers);}
 .who strong{display:block; margin-bottom:4px; color:var(--text);}
-.note{background:var(--accent-bg); border-radius:10px; padding:12px 14px; font-size:0.88rem; margin-bottom:14px;}
-.muted{color:var(--muted); font-size:0.85rem; margin-top:8px;}
+
+.note{background:var(--note-bg); color:var(--note-text); border-radius:12px; padding:13px 15px; font-size:0.87rem; margin-bottom:14px;}
+.status-line{color:var(--muted); font-size:0.85rem; margin:10px 0;}
+
+/* ---- Buttons ---- */
 .primary-btn, .secondary-btn{
-  border-radius:8px; padding:10px 16px; font-size:0.9rem; cursor:pointer; border:none;
+  border-radius:24px; padding:11px 18px; font-size:0.9rem; cursor:pointer; border:none;
+  font-family:inherit; font-weight:600; transition:opacity 0.15s;
 }
 .primary-btn{background:var(--accent); color:#fff; width:100%;}
+.primary-btn:active{opacity:0.85;}
 .secondary-btn{background:var(--card); border:1px solid var(--border); color:var(--text); margin-bottom:12px;}
+
+/* ---- Discover tab ---- */
+.search-row{display:flex; gap:8px; margin-bottom:12px;}
+.search-row input{
+  flex:1; border:1px solid var(--border); border-radius:24px; padding:11px 16px;
+  background:var(--card); color:var(--text); font-size:0.9rem; font-family:inherit;
+}
+.discover-actions{margin:4px 0 10px;}
+.discover-thumb-wide{width:100%; height:150px; object-fit:cover; display:block; background:var(--border);}
+.badges{margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;}
+.badge{font-size:0.72rem; padding:3px 10px; border-radius:20px; font-weight:600;}
+.badge-ok{background:var(--ok-bg); color:var(--ok);}
+.badge-warn{background:var(--warn-bg); color:var(--warn);}
+.badge-bad{background:var(--bad-bg); color:var(--bad);}
+.badge-note{background:var(--note-bg); color:var(--note-text);}
+.save-recipe-btn{margin-top:12px; width:100%;}
+
+/* ---- Checker ---- */
 .checker-box{margin-bottom:18px;}
-.checker-box label{display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px;}
+.checker-box label{display:block; font-size:0.85rem; color:var(--muted); margin-bottom:6px; font-weight:500;}
 #manual-input{
-  width:100%; border:1px solid var(--border); border-radius:8px; padding:10px;
+  width:100%; border:1px solid var(--border); border-radius:12px; padding:12px;
   background:var(--card); color:var(--text); font-family:inherit; font-size:0.9rem; margin-bottom:8px;
 }
-.scanner-frame{margin-top:10px; border-radius:8px; overflow:hidden;}
-.verdict-box{border-radius:10px; padding:14px 16px; margin-top:10px;}
-.verdict-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--border);}
+.scanner-frame{margin-top:10px; border-radius:12px; overflow:hidden;}
+.verdict-box{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; margin-top:10px; box-shadow:var(--shadow);}
+.verdict-box h4{margin:0 0 10px;}
+.verdict-row{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border);}
 .verdict-row:last-child{border-bottom:none;}
-.verdict-icon{font-size:1.2rem;}
-.verdict-ok{background:var(--ok-bg); color:var(--ok);}
-.verdict-warn{background:var(--warn-bg); color:var(--warn);}
-.verdict-bad{background:var(--bad-bg); color:var(--bad);}
-.hit-list{font-size:0.8rem; color:var(--muted); margin-top:2px;}
-#shopping-list .card{cursor:default;}
-.shop-item{display:flex; align-items:center; gap:10px; padding:4px 0;}
-.shop-item input{width:18px; height:18px;}
-.shop-item.checked span{text-decoration:line-through; color:var(--muted);}
+.verdict-icon{font-size:1.3rem;}
+.verdict-ok{color:var(--ok);}
+.verdict-warn{color:var(--warn);}
+.verdict-bad{color:var(--bad);}
+.hit-list{font-size:0.8rem; color:var(--muted); margin-top:2px; font-weight:400;}
 
-/* Discover tab */
-#discover-ingredient-input{
-  width:100%; border:1px solid var(--border); border-radius:8px; padding:10px;
-  background:var(--card); color:var(--text); font-size:0.9rem; margin-bottom:8px;
+/* ---- Shopping list ---- */
+#shopping-list .card{cursor:default; padding:6px 4px;}
+.shop-item{display:flex; align-items:center; gap:12px; padding:10px 12px; border-bottom:1px solid var(--border);}
+.shop-item:last-child{border-bottom:none;}
+.shop-item input{width:20px; height:20px; accent-color:var(--accent);}
+.shop-item.checked span{text-decoration:line-through; color:var(--muted);}
+.shop-item label{font-size:0.92rem;}
+
+/* ---- Bottom nav ---- */
+.bottom-nav{
+  position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--card);
+  border-top:1px solid var(--border); padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  z-index:20; box-shadow:0 -2px 8px rgba(0,0,0,0.04);
 }
-.discover-card-top{display:flex; gap:12px; align-items:flex-start;}
-.discover-thumb{width:72px; height:72px; border-radius:8px; object-fit:cover; flex-shrink:0;}
-.badges{margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;}
-.badge{font-size:0.72rem; padding:2px 8px; border-radius:20px; background:var(--accent-bg); color:var(--text);}
-.save-recipe-btn{margin-top:10px;}
+.nav-btn{
+  flex:1; background:none; border:none; display:flex; flex-direction:column; align-items:center;
+  gap:2px; padding:6px 0; font-size:0.68rem; color:var(--muted); cursor:pointer; font-family:inherit;
+  font-weight:600;
+}
+.nav-btn.active{color:var(--accent);}
+.nav-icon{font-size:1.3rem;}
+
+@media (min-width:640px){
+  main{padding:24px;}
+  .bottom-nav{max-width:900px; left:50%; transform:translateX(-50%); border-radius:20px 20px 0 0; border:1px solid var(--border); border-bottom:none;}
+}

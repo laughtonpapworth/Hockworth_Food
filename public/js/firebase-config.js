@@ -34,19 +34,31 @@ function showSignIn() {
   appContent.style.display = 'none';
 }
 
-// signInWithRedirect is used instead of a popup because popups are
-// unreliable inside mobile browsers and installed PWAs (often blocked
-// outright). Redirect works everywhere at the cost of a page reload.
+// signInWithPopup is used here rather than a redirect, because Chrome's
+// third-party storage partitioning has been breaking the redirect-based
+// flow (it silently returns to the sign-in screen instead of completing).
+// Popup avoids that entirely. If the browser blocks the popup outright,
+// it falls back to redirect as a second attempt.
 document.getElementById('google-signin-btn').addEventListener('click', () => {
-  auth.signInWithRedirect(googleProvider);
+  signinError.style.display = 'none';
+  auth.signInWithPopup(googleProvider).catch(err => {
+    console.error('Popup sign-in failed, trying redirect instead', err);
+    if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
+      auth.signInWithRedirect(googleProvider);
+    } else {
+      signinError.style.display = '';
+      signinError.textContent = 'Sign-in failed: ' + err.message;
+    }
+  });
 });
 
 document.getElementById('signout-btn').addEventListener('click', () => {
   auth.signOut();
 });
 
+// Still handle a redirect result in case the popup fallback above was used.
 auth.getRedirectResult().catch(err => {
-  console.error('Sign-in failed', err);
+  console.error('Redirect sign-in failed', err);
   signinError.style.display = '';
   signinError.textContent = 'Sign-in failed: ' + err.message;
 });
