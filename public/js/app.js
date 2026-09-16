@@ -9,22 +9,79 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   });
 });
 
-let RECIPES = [];
-let DISCOVERED = [];
+let RECIPES = [];       // built-in recipes from recipes.json — default status 'plan'
+let DISCOVERED = [];    // saved-from-Discover recipes — default status 'saved'
+let STATUS = {};        // Firestore overrides: { [recipeId]: 'plan' | 'saved' }
+
+// A built-in recipe is 'plan' unless explicitly overridden to 'saved'.
+// A discovered recipe is 'saved' unless explicitly promoted to 'plan'.
+function getStatus(r) {
+  const override = STATUS[r.id || r.title];
+  if (r.type === 'discovered') return override === 'plan' ? 'plan' : 'saved';
+  return override === 'saved' ? 'saved' : 'plan';
+}
+
+function planRecipes() {
+  return [...RECIPES, ...DISCOVERED].filter(r => getStatus(r) === 'plan');
+}
+function savedRecipes() {
+  return [...RECIPES, ...DISCOVERED].filter(r => getStatus(r) === 'saved');
+}
+
+function refreshAll() {
+  const activeFilter = document.querySelector('.filter-btn.active');
+  renderRecipes(activeFilter ? activeFilter.dataset.filter : 'all');
+  renderSaved();
+  renderShoppingList(planRecipes());
+}
 
 function mergeDiscoveredRecipes(discovered) {
   DISCOVERED = discovered;
-  const activeFilter = document.querySelector('.filter-btn.active');
-  renderRecipes(activeFilter ? activeFilter.dataset.filter : 'all');
+  refreshAll();
 }
 
-// ---- Load recipes ----
+// ---- Recipe status sync (which recipes are in the Plan vs Saved) ----
+const statusDocRef = () =>
+  window.mealAppDb ? window.mealAppDb.collection('household').doc('recipe-status') : null;
+
+function setStatus(recipeId, status) {
+  const ref = statusDocRef();
+  if (!ref) { alert('Sign in first to change the plan.'); return; }
+  ref.set({ [recipeId]: status }, { merge: true }).catch(err => {
+    console.error('Could not update status', err);
+    alert('Could not save that change — check your connection and try again.');
+  });
+}
+
+function deleteDiscovered(recipeId) {
+  // recipeId looks like "discovered-<mealId>" — the underlying saved-recipes
+  // doc is keyed by the bare mealId.
+  const mealId = recipeId.replace(/^discovered-/, '');
+  const ref = window.mealAppDb ? window.mealAppDb.collection('household').doc('saved-recipes') : null;
+  if (!ref) { alert('Sign in first to delete recipes.'); return; }
+  ref.update({ [mealId]: firebase.firestore.FieldValue.delete() }).catch(err => {
+    console.error('Delete failed', err);
+    alert('Could not delete — check your connection and try again.');
+  });
+}
+
+function loadRecipeStatus() {
+  if (!window.mealAppDb) return;
+  window.mealAppDb.collection('household').doc('recipe-status').onSnapshot(snap => {
+    STATUS = snap.exists ? snap.data() : {};
+    refreshAll();
+  }, err => console.error('Could not load recipe status', err));
+}
+if (window.mealAppAuth) {
+  window.mealAppAuth.onAuthStateChanged(user => { if (user) loadRecipeStatus(); });
+}
+
+// ---- Load built-in recipes ----
 fetch('data/recipes.json')
   .then(r => r.json())
   .then(data => {
     RECIPES = data;
-    renderRecipes('all');
-    renderShoppingList(data);
+    refreshAll();
   })
   .catch(err => {
     document.getElementById('recipe-list').innerHTML =
@@ -32,10 +89,10 @@ fetch('data/recipes.json')
     console.error(err);
   });
 
-// ---- Recipe filtering ----
-document.querySelectorAll('.filter-btn').forEach(btn => {
+// ---- Recipe filtering (Plan tab) ----
+document.querySelectorAll('.filter-btn:not(.category-chip)').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#recipes .filter-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderRecipes(btn.dataset.filter);
   });
@@ -43,32 +100,76 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 
 function renderRecipes(filter) {
   const list = document.getElementById('recipe-list');
-  const combined = [...RECIPES, ...DISCOVERED];
-  const items = filter === 'all' ? combined : combined.filter(r => r.type === filter);
+  const items = filter === 'all' ? planRecipes() : planRecipes().filter(r => r.type === filter);
   list.innerHTML = items.length
-    ? items.map(recipeCardHtml).join('')
-    : '<div class="note">Nothing here yet — try the Discover tab to find and save some.</div>';
-  list.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => card.classList.toggle('expanded'));
+    ? items.map(r => recipeCardHtml(r, 'plan')).join('')
+    : '<div class="note">Nothing here — add something from Discover, or check Saved.</div>';
+  wireCardEvents(list);
+}
+
+function renderSaved() {
+  const list = document.getElementById('saved-list');
+  if (!list) return;
+  const items = savedRecipes();
+  list.innerHTML = items.length
+    ? items.map(r => recipeCardHtml(r, 'saved')).join('')
+    : '<div class="note">Nothing saved yet — recipes you remove from the plan, or save from Discover, land here.</div>';
+  wireCardEvents(list);
+}
+
+function wireCardEvents(container) {
+  container.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('.card-action-btn')) return;
+      card.classList.toggle('expanded');
+    });
+  });
+  container.querySelectorAll('.remove-from-plan-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      setStatus(btn.dataset.id, 'saved');
+    });
+  });
+  container.querySelectorAll('.add-to-plan-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      setStatus(btn.dataset.id, 'plan');
+    });
+  });
+  container.querySelectorAll('.delete-recipe-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (confirm('Delete this recipe permanently?')) deleteDiscovered(btn.dataset.id);
+    });
   });
 }
 
-function recipeCardHtml(r) {
+function recipeCardHtml(r, context) {
+  const id = r.id || r.title;
+  const actionBtn = context === 'plan'
+    ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>`
+    : `<button class="secondary-btn card-action-btn add-to-plan-btn" data-id="${id}">Add to plan</button>` +
+      (r.type === 'discovered' ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>` : '');
+
   if (r.type === 'discovered') {
     return `
       <div class="card">
-        ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb" loading="lazy">` : ''}
-        <h3>${r.title}</h3>
-        <div class="meta">Saved from Discover</div>
-        <div class="tag">discovered</div>
-        <div class="details">
-          <h4>Ingredients</h4>
-          <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
-          <h4>Method</h4>
-          <p>${(r.instructionsText || '').replace(/\r?\n/g, '<br>')}</p>
+        ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb-wide" loading="lazy">` : ''}
+        <div class="card-body">
+          <h3>${r.title}</h3>
+          <div class="meta">Saved from Discover</div>
+          <div class="tag">discovered</div>
+          <div class="details">
+            <h4>Ingredients</h4>
+            <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
+            <h4>Method</h4>
+            <p>${(r.instructionsText || '').replace(/\r?\n/g, '<br>')}</p>
+            <div class="card-actions">${actionBtn}</div>
+          </div>
         </div>
       </div>`;
   }
+
   const daysText = (r.days || []).join(', ');
   let body = '';
 
@@ -88,15 +189,19 @@ function recipeCardHtml(r) {
 
   return `
     <div class="card">
-      <h3>${r.title}</h3>
-      <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>
-      <div class="tag">${r.type}</div>
-      ${daysText ? `<div class="meta">${daysText}</div>` : ''}
-      <div class="details">${body}</div>
+      <div class="card-body">
+        <h3>${r.title}</h3>
+        <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>
+        <div class="tag">${r.type}</div>
+        ${daysText ? `<div class="meta">${daysText}</div>` : ''}
+        <div class="details">${body}<div class="card-actions">${actionBtn}</div></div>
+      </div>
     </div>`;
 }
 
 // ---- Shopping list (synced across devices via Firestore, falls back to localStorage) ----
+// Only recipes currently in the Plan feed the shopping list — Saved recipes
+// are a holding pen and never contribute ingredients automatically.
 function collectItems(recipes) {
   const seen = new Set();
   const items = [];
@@ -165,8 +270,6 @@ function renderShoppingList(recipes) {
 
   const ref = shoppingDocRef();
   if (ref) {
-    // Live sync: fires immediately with current state, then again whenever
-    // either device changes it — this is what makes both phones stay in sync.
     shoppingUnsubscribe = ref.onSnapshot(
       snap => draw(snap.exists ? snap.data() : {}),
       err => {

@@ -155,7 +155,7 @@ async function renderDiscoverResults(meals) {
           <ul>${ingredientsList.map(i => `<li>${i}</li>`).join('')}</ul>
           <h4>Method</h4>
           <p>${(meal.strInstructions || '').replace(/\r?\n/g, '<br>')}</p>
-          <button class="secondary-btn save-recipe-btn">Save to our plan</button>
+          <button class="secondary-btn save-recipe-btn">Save recipe</button>
         </div>
       </div>`;
 
@@ -186,7 +186,7 @@ function saveDiscoveredRecipe(meal, ingredientsList) {
     savedAt: Date.now()
   };
   ref.set({ [meal.idMeal]: record }, { merge: true })
-    .then(() => alert(`Saved "${meal.strMeal}" — find it under the Saved filter on the Plan tab.`))
+    .then(() => alert(`Saved "${meal.strMeal}" — find it on the Saved tab — add it to the Plan from there whenever you like.`))
     .catch(err => {
       console.error(err);
       alert('Could not save — check your connection and try again.');

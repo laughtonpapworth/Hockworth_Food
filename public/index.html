@@ -37,9 +37,14 @@
       <button class="filter-btn" data-filter="shared">Shared</button>
       <button class="filter-btn" data-filter="swap">Swap</button>
       <button class="filter-btn" data-filter="individual">Individual</button>
-      <button class="filter-btn" data-filter="discovered">Saved</button>
     </div>
     <div id="recipe-list" class="card-grid"></div>
+  </section>
+
+  <section id="saved" class="tab-panel">
+    <div class="section-title">Saved</div>
+    <div class="note">Recipes here don't feed the shopping list. Remove something from the Plan and it lands here; add something back whenever you like.</div>
+    <div id="saved-list" class="card-grid"></div>
   </section>
 
   <section id="discover" class="tab-panel">
@@ -91,6 +96,7 @@
 <nav class="bottom-nav">
   <button type="button" class="nav-btn active" data-tab="recipes"><span class="nav-icon">📋</span><span>Plan</span></button>
   <button type="button" class="nav-btn" data-tab="discover"><span class="nav-icon">🔍</span><span>Discover</span></button>
+  <button type="button" class="nav-btn" data-tab="saved"><span class="nav-icon">⭐</span><span>Saved</span></button>
   <button type="button" class="nav-btn" data-tab="shopping"><span class="nav-icon">🛒</span><span>Shopping</span></button>
   <button type="button" class="nav-btn" data-tab="checker"><span class="nav-icon">✅</span><span>Checker</span></button>
 </nav>
