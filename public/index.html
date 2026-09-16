@@ -9,10 +9,23 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+<div id="signin-screen" class="signin-screen">
+  <h2>🍽️ Our Meal Plan</h2>
+  <p class="muted">Sign in with Google to load your synced shopping list.</p>
+  <button id="google-signin-btn" class="primary-btn">Sign in with Google</button>
+  <p id="signin-error" class="muted" style="display:none;"></p>
+</div>
+
+<div id="app-content" style="display:none;">
 <header class="app-header">
-  <h1>🍽️ Our Meal Plan</h1>
+  <div class="header-top">
+    <h1>🍽️ Our Meal Plan</h1>
+    <button id="signout-btn" class="signout-btn" title="Sign out"></button>
+  </div>
   <nav class="tabs">
     <button class="tab-btn active" data-tab="recipes">Recipes</button>
+    <button class="tab-btn" data-tab="discover">Discover</button>
     <button class="tab-btn" data-tab="shopping">Shopping List</button>
     <button class="tab-btn" data-tab="checker">Checker</button>
   </nav>
@@ -25,12 +38,26 @@
       <button class="filter-btn" data-filter="shared">Shared</button>
       <button class="filter-btn" data-filter="swap">Swap</button>
       <button class="filter-btn" data-filter="individual">Individual</button>
+      <button class="filter-btn" data-filter="discovered">Discovered</button>
     </div>
     <div id="recipe-list" class="card-list"></div>
   </section>
 
+  <section id="discover" class="tab-panel">
+    <div class="note">Pulls real recipes from a public recipe database, then runs every ingredient list through the same checker as the barcode scanner — so a ✅/⚠️/❌ shows for each of you before you even open the recipe. This is a genuinely open-ended search, not limited to the recipes already in your plan.</div>
+
+    <div class="checker-box">
+      <label for="discover-ingredient-input">Search by an ingredient you have</label>
+      <input type="text" id="discover-ingredient-input" placeholder="e.g. chicken, lentils, sweet potato">
+      <button id="discover-search-btn" class="primary-btn">Search</button>
+    </div>
+    <button id="discover-random-btn" class="secondary-btn">🎲 Surprise me instead</button>
+    <div id="discover-status" class="muted"></div>
+    <div id="discover-results" class="card-list"></div>
+  </section>
+
   <section id="shopping" class="tab-panel">
-    <div class="note">Ticks sync live between both your phones via Firestore, once you've added your Firebase config (see README). Until then it falls back to saving on this device only.</div>
+    <div class="note">Ticks sync live between both your phones via Firestore.</div>
     <button id="reset-shopping" class="secondary-btn">Reset list</button>
     <div id="shopping-list" class="card-list"></div>
   </section>
@@ -53,6 +80,7 @@
     <div id="verdict" class="verdict-box" style="display:none;"></div>
   </section>
 </main>
+</div>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -61,6 +89,7 @@
 <script src="js/firebase-config.js"></script>
 <script src="js/app.js"></script>
 <script src="js/checker.js"></script>
+<script src="js/discover.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

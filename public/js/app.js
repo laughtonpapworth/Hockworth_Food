@@ -9,6 +9,13 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 let RECIPES = [];
+let DISCOVERED = [];
+
+function mergeDiscoveredRecipes(discovered) {
+  DISCOVERED = discovered;
+  const activeFilter = document.querySelector('.filter-btn.active');
+  renderRecipes(activeFilter ? activeFilter.dataset.filter : 'all');
+}
 
 // ---- Load recipes ----
 fetch('data/recipes.json')
@@ -35,14 +42,32 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 
 function renderRecipes(filter) {
   const list = document.getElementById('recipe-list');
-  const items = filter === 'all' ? RECIPES : RECIPES.filter(r => r.type === filter);
-  list.innerHTML = items.map(recipeCardHtml).join('');
+  const combined = [...RECIPES, ...DISCOVERED];
+  const items = filter === 'all' ? combined : combined.filter(r => r.type === filter);
+  list.innerHTML = items.length
+    ? items.map(recipeCardHtml).join('')
+    : '<div class="note">Nothing here yet — try the Discover tab to find and save some.</div>';
   list.querySelectorAll('.card').forEach(card => {
     card.addEventListener('click', () => card.classList.toggle('expanded'));
   });
 }
 
 function recipeCardHtml(r) {
+  if (r.type === 'discovered') {
+    return `
+      <div class="card">
+        ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb" loading="lazy">` : ''}
+        <h3>${r.title}</h3>
+        <div class="meta">Saved from Discover</div>
+        <div class="tag">discovered</div>
+        <div class="details">
+          <h4>Ingredients</h4>
+          <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
+          <h4>Method</h4>
+          <p>${(r.instructionsText || '').replace(/\r?\n/g, '<br>')}</p>
+        </div>
+      </div>`;
+  }
   const daysText = (r.days || []).join(', ');
   let body = '';
 

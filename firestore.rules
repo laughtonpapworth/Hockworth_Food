@@ -1,11 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Anonymous auth (set up in firebase-config.js) means both your phones
-    // sign in silently and get an auth token, without either of you needing
-    // a password. This rule just requires *some* signed-in identity.
+    // Only these two Google accounts can read or write the shared data.
+    // Replace both placeholders with your actual Gmail/Google Workspace
+    // addresses before running `firebase deploy --only firestore:rules`.
+    function isHousehold() {
+      return request.auth != null && request.auth.token.email in [
+        'REPLACE_WITH_HIS_EMAIL@gmail.com',
+        'REPLACE_WITH_HER_EMAIL@gmail.com'
+      ];
+    }
+
     match /household/{docId} {
-      allow read, write: if request.auth != null;
+      allow read, write: if isHousehold();
     }
   }
 }

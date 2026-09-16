@@ -1,9 +1,9 @@
 let RULES = null;
 
-fetch('data/ingredient-rules.json')
+window.rulesReady = fetch('data/ingredient-rules.json')
   .then(r => r.json())
-  .then(data => { RULES = data; })
-  .catch(err => console.error('Could not load ingredient-rules.json', err));
+  .then(data => { RULES = data; window.RULES = data; return data; })
+  .catch(err => { console.error('Could not load ingredient-rules.json', err); throw err; });
 
 // ---- Core matching logic ----
 function checkIngredients(text) {

@@ -23,6 +23,18 @@ body{
   border-bottom:1px solid var(--border); padding:12px 16px 0;
 }
 .app-header h1{font-size:1.2rem; margin:0 0 10px;}
+.header-top{display:flex; align-items:center; justify-content:space-between; gap:8px;}
+.signout-btn{
+  background:none; border:1px solid var(--border); color:var(--muted);
+  border-radius:20px; padding:4px 12px; font-size:0.72rem; cursor:pointer;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:170px;
+}
+.signin-screen{
+  min-height:100vh; display:flex; flex-direction:column; align-items:center;
+  justify-content:center; text-align:center; padding:24px; gap:14px;
+}
+.signin-screen h2{margin:0; font-size:1.3rem;}
+.signin-screen .primary-btn{width:auto; padding:12px 24px;}
 .tabs{display:flex; gap:4px;}
 .tab-btn{
   flex:1; background:none; border:none; padding:10px 0; font-size:0.9rem;
@@ -84,3 +96,14 @@ main{max-width:700px; margin:0 auto; padding:16px;}
 .shop-item{display:flex; align-items:center; gap:10px; padding:4px 0;}
 .shop-item input{width:18px; height:18px;}
 .shop-item.checked span{text-decoration:line-through; color:var(--muted);}
+
+/* Discover tab */
+#discover-ingredient-input{
+  width:100%; border:1px solid var(--border); border-radius:8px; padding:10px;
+  background:var(--card); color:var(--text); font-size:0.9rem; margin-bottom:8px;
+}
+.discover-card-top{display:flex; gap:12px; align-items:flex-start;}
+.discover-thumb{width:72px; height:72px; border-radius:8px; object-fit:cover; flex-shrink:0;}
+.badges{margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;}
+.badge{font-size:0.72rem; padding:2px 8px; border-radius:20px; background:var(--accent-bg); color:var(--text);}
+.save-recipe-btn{margin-top:10px;}

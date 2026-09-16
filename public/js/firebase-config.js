@@ -45,4 +45,16 @@ document.getElementById('signout-btn').addEventListener('click', () => {
   auth.signOut();
 });
 
-auth.getRedirectResult(
+auth.getRedirectResult().catch(err => {
+  console.error('Sign-in failed', err);
+  signinError.style.display = '';
+  signinError.textContent = 'Sign-in failed: ' + err.message;
+});
+
+auth.onAuthStateChanged(user => {
+  if (user) {
+    showApp(user);
+  } else {
+    showSignIn();
+  }
+});

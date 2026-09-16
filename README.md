@@ -42,10 +42,12 @@ In the left sidebar: **Build → Firestore Database → Create database**.
 - Choose **Start in production mode** (the rules file in this repo controls access properly).
 - Pick a location close to you — `europe-west2` (London) is the sensible choice for the UK.
 
-### 3. Enable Anonymous Authentication
-Left sidebar: **Build → Authentication → Get started → Sign-in method → Anonymous → Enable**.
-This lets both your phones connect to Firestore without either of you needing a password —
-each device just gets a silent, automatic sign-in.
+### 3. Enable Google Sign-In
+Left sidebar: **Build → Authentication → Get started → Sign-in method → Google → Enable**.
+It'll ask for a support email — use either of yours. **Save**.
+
+Firebase automatically authorises `localhost` and your `*.web.app` Hosting domain for sign-in,
+so no extra domain setup is needed unless you later add a custom domain.
 
 ### 4. Register a web app and get your config keys
 Project settings (gear icon, top left) → scroll to **Your apps** → click the **</>** (web) icon →
@@ -99,11 +101,18 @@ settings → Service accounts → Generate new private key → download the JSON
 into a new GitHub repo secret named `FIREBASE_SERVICE_ACCOUNT` under
 Papworth_food → Settings → Secrets and variables → Actions.)*
 
-### 8. Deploy the Firestore rules (one-off, not handled by the GitHub Action)
+### 8. Restrict access to your two accounts, then deploy the rules
+Open `firestore.rules` and replace both placeholder emails with your actual Google account
+addresses (the ones you'll each sign in with):
+```
+'REPLACE_WITH_HIS_EMAIL@gmail.com',
+'REPLACE_WITH_HER_EMAIL@gmail.com'
+```
+Then deploy it — this is a one-off, not handled by the GitHub Action:
 ```bash
 firebase deploy --only firestore:rules
 ```
-This only needs re-running if you ever change `firestore.rules`.
+Only needs re-running if you ever change `firestore.rules` (e.g. to add a third account later).
 
 ### 9. Icons (optional, for the "add to home screen" prompt)
 Drop a 192×192 and a 512×512 PNG into `public/icons/`, named `icon-192.png` and `icon-512.png`.
@@ -123,10 +132,11 @@ Watch the **Actions** tab on the Papworth_food GitHub repo — it'll run the dep
 automatically. Once it's green, your app is live at `https://<your-project-id>.web.app`.
 
 ### 11. Test the sync
-Open the URL on both your phones (or a phone and a laptop), go to **Shopping List**, and tick
-something on one — it should appear ticked on the other within a second or two. If it doesn't,
-open the browser console and check for a Firestore permission error, which almost always means
-step 8 didn't run or step 4's config keys weren't saved correctly.
+Open the URL on both your phones, sign in with Google (whichever of your two accounts you're
+holding), go to **Shopping List**, and tick something on one — it should appear ticked on the
+other within a second or two. If sign-in itself fails, double check step 3. If sign-in works but
+ticks don't sync, it's almost always step 8 — the email in `firestore.rules` not matching exactly
+the Google account you signed in with.
 
 ---
 
@@ -145,6 +155,3 @@ step 8 didn't run or step 4's config keys weren't saved correctly.
 - **This is a text-match checker, not a medical device.** Always read the actual label if
   there's any doubt, and treat "may contain traces of..." warnings as a separate judgement
   call from confirmed ingredients.
-- **Anonymous auth means anyone with your exact app URL could in theory read/write the shopping
-  list** (there's no password gate). Fine for a low-stakes household list; if that ever matters,
-  swapping Anonymous auth for a shared PIN or email/password sign-in is a small follow-up change.
