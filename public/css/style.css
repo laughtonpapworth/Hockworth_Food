@@ -198,6 +198,9 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
   width:100%; border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--bg);
   color:var(--text); font-family:inherit; font-size:0.9rem;
 }
+.modal-box input[type="file"]{
+  width:100%; font-size:0.85rem; color:var(--text); margin-bottom:8px;
+}
 
 /* Brief highlight flash when jumping to a recipe from the calendar */
 .cal-highlight{animation:cal-flash 1.5s ease-out;}

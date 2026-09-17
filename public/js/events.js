@@ -1,8 +1,22 @@
 let EVENTS = {};
 let currentViewedEventId = null;
+let eventChecked = {};
+let eventCheckedUnsub = null;
 
 const eventsDocRef = () =>
   window.mealAppDb ? window.mealAppDb.collection('household').doc('events') : null;
+const eventCheckedDocRef = () =>
+  window.mealAppDb ? window.mealAppDb.collection('household').doc('event-shopping-checked') : null;
+
+function loadEventChecked() {
+  const ref = eventCheckedDocRef();
+  if (!ref) return;
+  if (eventCheckedUnsub) eventCheckedUnsub();
+  eventCheckedUnsub = ref.onSnapshot(snap => {
+    eventChecked = snap.exists ? snap.data() : {};
+    if (currentViewedEventId) renderEventDetail(currentViewedEventId);
+  }, err => console.error('Could not load event shopping ticks', err));
+}
 
 function loadEvents() {
   const ref = eventsDocRef();
@@ -13,7 +27,7 @@ function loadEvents() {
   }, err => console.error('Could not load events', err));
 }
 if (window.mealAppAuth) {
-  window.mealAppAuth.onAuthStateChanged(user => { if (user) loadEvents(); });
+  window.mealAppAuth.onAuthStateChanged(user => { if (user) { loadEvents(); loadEventChecked(); } });
 }
 
 function saveEvent(name, guests, courses) {
@@ -33,6 +47,8 @@ function deleteEvent(id) {
   const updated = { ...EVENTS };
   delete updated[id];
   ref.set({ list: updated }).catch(err => console.error('Could not delete event', err));
+  const checkedRef = eventCheckedDocRef();
+  if (checkedRef) checkedRef.update({ [id]: firebase.firestore.FieldValue.delete() }).catch(() => {});
 }
 
 // Best-effort quantity scaling: adjusts a leading number in an ingredient
@@ -126,10 +142,21 @@ function renderEventDetail(id) {
   });
 
   const itemsContainer = document.getElementById('event-shop-items');
+  const checkedForEvent = eventChecked[id] || {};
   items.forEach(item => {
+    const isChecked = !!checkedForEvent[item];
     const row = document.createElement('div');
-    row.className = 'shop-item';
-    row.innerHTML = `<span>${item}</span>`;
+    row.className = 'shop-item' + (isChecked ? ' checked' : '');
+    const boxId = 'event-item-' + Math.random().toString(36).slice(2);
+    row.innerHTML = `<input type="checkbox" id="${boxId}" ${isChecked ? 'checked' : ''}><label for="${boxId}"><span>${item}</span></label>`;
+    row.querySelector('input').addEventListener('change', e => {
+      const ref = eventCheckedDocRef();
+      if (!ref) return;
+      const current = eventChecked[id] || {};
+      current[item] = e.target.checked;
+      ref.set({ [id]: current }, { merge: true }).catch(err => console.error('Could not save tick', err));
+      row.classList.toggle('checked', e.target.checked);
+    });
     itemsContainer.appendChild(row);
   });
 }

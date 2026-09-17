@@ -39,20 +39,35 @@ function closeModal() {
   if (existing) existing.remove();
 }
 
-// ---- Add your own recipe ----
+// ---- Add your own recipe (type it in, or scan a photo) ----
 document.getElementById('add-custom-recipe-btn').addEventListener('click', () => {
   showModal(`
     <h3>Add your own recipe</h3>
+    <div class="card-actions" style="margin-bottom:4px;">
+      <button class="secondary-btn card-action-btn" id="mode-type-btn">⌨️ Type it in</button>
+      <button class="secondary-btn card-action-btn" id="mode-scan-btn">📷 Scan a photo</button>
+    </div>
+    <div id="recipe-form-area"></div>`);
+  document.getElementById('mode-type-btn').addEventListener('click', () => renderRecipeTypeForm());
+  document.getElementById('mode-scan-btn').addEventListener('click', renderRecipeScanForm);
+  renderRecipeTypeForm();
+});
+
+function renderRecipeTypeForm(prefill) {
+  const area = document.getElementById('recipe-form-area');
+  const t = prefill || { title: '', ingredients: [], instructions: [] };
+  area.innerHTML = `
+    ${prefill ? '<div class="note" style="margin-top:10px;">Pulled from the photo — OCR isn\'t perfect, so check this over before saving.</div>' : ''}
     <label class="muted" style="display:block;margin:10px 0 4px;">Title</label>
-    <input type="text" id="custom-title-input" placeholder="e.g. Grandma's fish pie">
+    <input type="text" id="custom-title-input" value="${(t.title || '').replace(/"/g, '&quot;')}" placeholder="e.g. Grandma's fish pie">
     <label class="muted" style="display:block;margin:12px 0 4px;">Ingredients <span class="muted-inline">— one per line</span></label>
-    <textarea id="custom-ingredients-input" rows="4" placeholder="500g potatoes&#10;2 fillets smoked haddock&#10;..."></textarea>
+    <textarea id="custom-ingredients-input" rows="4" placeholder="500g potatoes&#10;2 fillets smoked haddock&#10;...">${(t.ingredients || []).join('\n')}</textarea>
     <label class="muted" style="display:block;margin:12px 0 4px;">Method <span class="muted-inline">— one step per line</span></label>
-    <textarea id="custom-instructions-input" rows="4" placeholder="Boil the potatoes...&#10;Poach the fish...&#10;..."></textarea>
+    <textarea id="custom-instructions-input" rows="4" placeholder="Boil the potatoes...&#10;Poach the fish...&#10;...">${(t.instructions || []).join('\n')}</textarea>
     <div class="card-actions" style="margin-top:16px;">
       <button class="primary-btn" id="custom-save-btn">Save recipe</button>
       <button class="secondary-btn" id="custom-cancel-btn">Cancel</button>
-    </div>`);
+    </div>`;
   document.getElementById('custom-cancel-btn').addEventListener('click', closeModal);
   document.getElementById('custom-save-btn').addEventListener('click', () => {
     const title = document.getElementById('custom-title-input').value.trim();
@@ -65,7 +80,65 @@ document.getElementById('add-custom-recipe-btn').addEventListener('click', () =>
     saveCustomRecipe(title, ingredients, instructions);
     closeModal();
   });
-});
+}
+
+function renderRecipeScanForm() {
+  const area = document.getElementById('recipe-form-area');
+  area.innerHTML = `
+    <p class="muted" style="margin:10px 0;">Take or choose a photo of a recipe — a cookbook page, a printed recipe, a handwritten card. Works best with clear, well-lit printed text.</p>
+    <input type="file" accept="image/*" capture="environment" id="recipe-photo-input">
+    <div id="ocr-status" class="status-line"></div>`;
+  document.getElementById('recipe-photo-input').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('ocr-status');
+    try {
+      statusEl.textContent = 'Loading the text reader (first time only)...';
+      if (!window.Tesseract) await loadTesseractScript();
+      statusEl.textContent = 'Reading the photo — this can take a moment...';
+      const worker = await Tesseract.createWorker('eng');
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+      statusEl.textContent = '';
+      renderRecipeTypeForm(parseRecipeText(text));
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Could not read that photo — try a clearer, better-lit image, or type it in instead.';
+    }
+  });
+}
+
+function loadTesseractScript() {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Could not load the text reader — check your connection.'));
+    document.head.appendChild(script);
+  });
+}
+
+// Best-effort split of raw OCR text into title/ingredients/method. Always
+// meant to be reviewed and corrected by hand afterwards, not saved blind.
+function parseRecipeText(text) {
+  const lines = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  const title = lines[0] || '';
+  const lowerLines = lines.map(l => l.toLowerCase());
+  const ingIdx = lowerLines.findIndex(l => /ingredient/.test(l));
+  const methodIdx = lowerLines.findIndex((l, i) => /method|instructions?|directions?|^steps?$/.test(l) && (ingIdx === -1 || i > ingIdx));
+
+  let ingredients = [];
+  let instructions = [];
+  if (ingIdx !== -1 && methodIdx !== -1 && methodIdx > ingIdx) {
+    ingredients = lines.slice(ingIdx + 1, methodIdx);
+    instructions = lines.slice(methodIdx + 1);
+  } else if (ingIdx !== -1) {
+    ingredients = lines.slice(ingIdx + 1);
+  } else {
+    ingredients = lines.slice(1);
+  }
+  return { title, ingredients, instructions };
+}
 
 function saveCustomRecipe(title, ingredients, instructions) {
   const ref = window.mealAppDb ? window.mealAppDb.collection('household').doc('saved-recipes') : null;
