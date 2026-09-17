@@ -30,11 +30,11 @@ if (window.mealAppAuth) {
   window.mealAppAuth.onAuthStateChanged(user => { if (user) { loadEvents(); loadEventChecked(); } });
 }
 
-function saveEvent(name, guests, courses) {
+function saveEvent(name, guests, courses, cateredFor) {
   const ref = eventsDocRef();
   if (!ref) { alert('Sign in first to save events.'); return; }
   const id = 'event_' + Date.now();
-  const event = { id, name, guests, baseServings: 4, courses, createdAt: Date.now() };
+  const event = { id, name, guests, baseServings: 4, courses, cateredFor: cateredFor || [], createdAt: Date.now() };
   ref.set({ list: { ...EVENTS, [id]: event } }).catch(err => {
     console.error('Could not save event', err);
     alert('Could not save — check your connection and try again.');
@@ -126,6 +126,7 @@ function renderEventDetail(id) {
       <div class="card-body">
         <h3>${ev.name}</h3>
         <div class="meta">${ev.guests} guests · quantities scaled from a base of ${ev.baseServings || 4}</div>
+        ${ev.cateredFor && ev.cateredFor.length ? `<div class="meta">Catering for: ${ev.cateredFor.join(', ')}</div>` : ''}
         ${courseSummaries}
         <div class="card-actions">
           <button type="button" class="secondary-btn" id="delete-event-btn">Delete event</button>

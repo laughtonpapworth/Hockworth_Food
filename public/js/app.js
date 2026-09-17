@@ -94,11 +94,8 @@ function renderRecipeScanForm() {
     const statusEl = document.getElementById('ocr-status');
     try {
       statusEl.textContent = 'Loading the text reader (first time only)...';
-      if (!window.Tesseract) await loadTesseractScript();
       statusEl.textContent = 'Reading the photo — this can take a moment...';
-      const worker = await Tesseract.createWorker('eng');
-      const { data: { text } } = await worker.recognize(file);
-      await worker.terminate();
+      const text = await runOcrOnFile(file);
       statusEl.textContent = '';
       renderRecipeTypeForm(parseRecipeText(text));
     } catch (err) {
@@ -116,6 +113,44 @@ function loadTesseractScript() {
     script.onerror = () => reject(new Error('Could not load the text reader — check your connection.'));
     document.head.appendChild(script);
   });
+}
+
+// Decodes the photo through a canvas before handing it to Tesseract, rather
+// than passing the raw file straight in. This fixes garbled/nonsense output
+// caused by phone camera formats (HEIC, unusual EXIF orientation, very large
+// files) that Tesseract can otherwise fail to decode correctly — the canvas
+// forces the browser's own image decoder to normalise it to plain RGB first.
+function fileToCanvas(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const maxDim = 1600;
+      let { width, height } = img;
+      if (width > maxDim || height > maxDim) {
+        const scale = maxDim / Math.max(width, height);
+        width = Math.round(width * scale);
+        height = Math.round(height * scale);
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Could not read that image file.')); };
+    img.src = url;
+  });
+}
+
+async function runOcrOnFile(file) {
+  if (!window.Tesseract) await loadTesseractScript();
+  const canvas = await fileToCanvas(file);
+  const worker = await Tesseract.createWorker('eng');
+  const { data: { text } } = await worker.recognize(canvas);
+  await worker.terminate();
+  return text;
 }
 
 // Best-effort split of raw OCR text into title/ingredients/method. Always

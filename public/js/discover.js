@@ -284,7 +284,7 @@ document.getElementById('open-party-wizard-btn').addEventListener('click', () =>
 });
 
 function openPartyWizard() {
-  wizardDraft = { name: '', guests: 4, courses: {} };
+  wizardDraft = { name: '', guests: 4, courses: {}, guestProfiles: [], selectedProfiles: [] };
   wizardSteps = ['setup'];
   wizardStepIndex = 0;
   document.getElementById('party-wizard-overlay').style.display = 'flex';
@@ -313,15 +313,25 @@ function setWizardChrome(title, progressText, nextLabel, backVisible) {
   document.getElementById('wizard-back-btn').style.visibility = backVisible ? 'visible' : 'hidden';
 }
 
-// ---- Step: setup (name, guests, courses) ----
+// ---- Step: setup (name, guests, who's being catered for, courses) ----
 function renderSetupStep() {
   setWizardChrome('New dinner party', '', 'Next ›', false);
+  const householdProfiles = typeof getProfiles === 'function' ? getProfiles() : [];
   document.getElementById('wizard-body').innerHTML = `
     <label class="muted" style="display:block; margin-bottom:4px;">Event name</label>
     <input type="text" id="wizard-name-input" placeholder="e.g. Sarah's Birthday Dinner" style="width:100%; margin-bottom:14px;" value="${wizardDraft.name}">
     <label class="muted" style="display:block; margin-bottom:4px;">Guests <span class="muted-inline">— recipes assume 4 servings by default</span></label>
     <input type="number" id="wizard-guests-input" min="1" value="${wizardDraft.guests}" style="width:100%; margin-bottom:14px;">
-    <label class="muted" style="display:block; margin-bottom:6px;">Courses</label>
+
+    <label class="muted" style="display:block; margin-bottom:6px;">Who needs catering for?</label>
+    <div class="filter-row">
+      ${householdProfiles.map(p => `<button type="button" class="filter-btn wiz-profile-toggle active" data-id="${p.id}">${p.name}</button>`).join('')}
+    </div>
+    <div id="wizard-guest-chips" class="filter-row"></div>
+    <button type="button" id="wizard-add-guest-btn" class="secondary-btn">+ Add a guest</button>
+    <div id="guest-form" style="display:none;"></div>
+
+    <label class="muted" style="display:block; margin:16px 0 6px;">Courses</label>
     <div class="filter-row">
       <button type="button" class="filter-btn wiz-course-toggle active" data-course="starter">Starter</button>
       <button type="button" class="filter-btn wiz-course-toggle active" data-course="main">Main</button>
@@ -329,8 +339,68 @@ function renderSetupStep() {
       <button type="button" class="filter-btn wiz-course-toggle" data-course="cheese">Cheese</button>
       <button type="button" class="filter-btn wiz-course-toggle" data-course="coffeeCake">Coffee &amp; cake</button>
     </div>`;
+
+  document.querySelectorAll('.wiz-profile-toggle').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
   document.querySelectorAll('.wiz-course-toggle').forEach(btn => {
     btn.addEventListener('click', () => btn.classList.toggle('active'));
+  });
+  document.getElementById('wizard-add-guest-btn').addEventListener('click', showGuestForm);
+  renderGuestChips();
+}
+
+function renderGuestChips() {
+  const el = document.getElementById('wizard-guest-chips');
+  if (!el) return;
+  el.innerHTML = wizardDraft.guestProfiles.map((g, i) =>
+    `<button type="button" class="filter-btn active guest-chip" data-idx="${i}" title="Tap to remove">${g.name} ✕</button>`
+  ).join('');
+  el.querySelectorAll('.guest-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      wizardDraft.guestProfiles.splice(parseInt(btn.dataset.idx, 10), 1);
+      renderGuestChips();
+    });
+  });
+}
+
+// Quick one-off profile for a guest who isn't a permanent household member —
+// their diet, allergies, and likes/dislikes only apply to this one event.
+function showGuestForm() {
+  const area = document.getElementById('guest-form');
+  area.style.display = '';
+  area.innerHTML = `
+    <input type="text" id="guest-name-input" placeholder="Guest's name" style="margin-top:10px;">
+    <div class="diet-toggle" style="margin-top:8px;">
+      <button type="button" class="guest-diet-btn active" data-diet="meat">Meat-eater</button>
+      <button type="button" class="guest-diet-btn" data-diet="vegetarian">Vegetarian</button>
+      <button type="button" class="guest-diet-btn" data-diet="vegan">Vegan</button>
+    </div>
+    <div class="allergy-grid" style="margin-top:8px;">
+      ${ALLERGY_KEYS.map(k => `<label class="allergy-check"><input type="checkbox" data-guest-allergy="${k}"> ${ALLERGY_LABELS[k]}</label>`).join('')}
+      <label class="allergy-check allergy-ibs"><input type="checkbox" id="guest-ibs-check"> IBS (FODMAP caution)</label>
+    </div>
+    <input type="text" id="guest-dislikes-input" placeholder="Dislikes (comma separated)" style="margin-top:8px;">
+    <input type="text" id="guest-likes-input" placeholder="Likes (comma separated)" style="margin-top:8px;">
+    <button type="button" id="guest-save-btn" class="primary-btn" style="margin-top:10px;">Add guest</button>`;
+
+  area.querySelectorAll('.guest-diet-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      area.querySelectorAll('.guest-diet-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  document.getElementById('guest-save-btn').addEventListener('click', () => {
+    const name = document.getElementById('guest-name-input').value.trim();
+    if (!name) { alert("Give the guest a name."); return; }
+    const diet = area.querySelector('.guest-diet-btn.active').dataset.diet;
+    const allergies = Array.from(area.querySelectorAll('[data-guest-allergy]:checked')).map(c => c.dataset.guestAllergy);
+    const ibs = document.getElementById('guest-ibs-check').checked;
+    const dislikes = document.getElementById('guest-dislikes-input').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    const likes = document.getElementById('guest-likes-input').value.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+    wizardDraft.guestProfiles.push({ id: 'guest_' + Date.now(), name, diet, allergies, ibs, customAllergies: [], dislikes, likes });
+    area.style.display = 'none';
+    renderGuestChips();
   });
 }
 
@@ -342,11 +412,14 @@ async function handleSetupNext() {
   const chosenCourses = Array.from(document.querySelectorAll('.wiz-course-toggle.active')).map(b => b.dataset.course);
   if (!chosenCourses.length) { alert('Pick at least one course.'); return; }
 
-  const profiles = getSelectedDiscoverProfiles();
-  if (!profiles.length) { alert('Select at least one person on the main Discover screen first.'); closePartyWizard(); return; }
+  const selectedHouseholdIds = Array.from(document.querySelectorAll('.wiz-profile-toggle.active')).map(b => b.dataset.id);
+  const householdProfiles = (typeof getProfiles === 'function' ? getProfiles() : []).filter(p => selectedHouseholdIds.includes(p.id));
+  const allProfiles = [...householdProfiles, ...wizardDraft.guestProfiles];
+  if (!allProfiles.length) { alert('Select at least one person, or add a guest, to cater for.'); return; }
 
   wizardDraft.name = name;
   wizardDraft.guests = guests;
+  wizardDraft.selectedProfiles = allProfiles;
   chosenCourses.forEach(key => {
     wizardDraft.courses[key] = COURSE_META[key].type === 'note'
       ? { type: 'note', text: '' }
@@ -358,7 +431,6 @@ async function handleSetupNext() {
   goToStep(1);
 }
 
-// ---- Step: a single course ----
 // ---- Step: a single course ----
 const MEAT_FISH_CATEGORIES = ['Chicken', 'Beef', 'Pork', 'Seafood', 'Lamb', 'Goat'];
 const GARNISH_KEYWORDS = ['pickle', 'chutney', 'relish', 'marmalade', 'garnish', 'dressing', 'dip', 'jam'];
@@ -468,12 +540,8 @@ function renderWizardScanForm(key, meta) {
     if (!file) return;
     const statusEl = document.getElementById('wiz-scan-status');
     try {
-      statusEl.textContent = 'Loading the text reader (first time only)...';
-      if (!window.Tesseract) await loadTesseractScript();
       statusEl.textContent = 'Reading the photo — this can take a moment...';
-      const worker = await Tesseract.createWorker('eng');
-      const { data: { text } } = await worker.recognize(file);
-      await worker.terminate();
+      const text = await runOcrOnFile(file);
       statusEl.textContent = '';
       renderWizardManualForm(key, meta, parseRecipeText(text));
     } catch (err) {
@@ -484,7 +552,7 @@ function renderWizardScanForm(key, meta) {
 }
 
 async function loadCourseOptions(key, meta) {
-  const profiles = getSelectedDiscoverProfiles();
+  const profiles = wizardDraft.selectedProfiles || [];
   const statusEl = document.getElementById('wizard-course-status');
   const grid = document.getElementById('wizard-course-grid');
   statusEl.textContent = 'Finding options...';
@@ -560,9 +628,11 @@ function renderReviewStep() {
     const summary = c.type === 'note' ? (c.text || '(nothing noted)') : (c.chosen ? c.chosen.meal.strMeal : '(not chosen yet)');
     return `<div class="event-course-line">${meta.emoji} ${meta.label}: <strong>${summary}</strong></div>`;
   }).join('');
+  const cateredFor = (wizardDraft.selectedProfiles || []).map(p => p.name).join(', ');
   document.getElementById('wizard-body').innerHTML = `
     <p style="font-weight:800; font-size:1.1rem; margin-bottom:4px;">${wizardDraft.name}</p>
-    <p class="muted" style="margin-bottom:14px;">${wizardDraft.guests} guests</p>
+    <p class="muted" style="margin-bottom:4px;">${wizardDraft.guests} guests</p>
+    <p class="muted" style="margin-bottom:14px;">Catering for: ${cateredFor || 'no one selected'}</p>
     ${lines}`;
 }
 
@@ -595,7 +665,8 @@ function saveWizardEvent() {
           ingredients: c.chosen.ingredientsList, instructions: c.chosen.meal.strInstructions || ''
         };
   });
-  if (typeof saveEvent === 'function') saveEvent(wizardDraft.name, wizardDraft.guests, coursesToSave);
+  const cateredFor = (wizardDraft.selectedProfiles || []).map(p => p.name);
+  if (typeof saveEvent === 'function') saveEvent(wizardDraft.name, wizardDraft.guests, coursesToSave, cateredFor);
   closePartyWizard();
   alert('Event saved — find its shopping list under Shopping → 🎉 Events.');
 }
