@@ -9,6 +9,16 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   });
 });
 
+// ---- Shopping/Pantry sub-tabs ----
+document.querySelectorAll('.subtab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const parent = btn.closest('.tab-panel');
+    parent.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+    parent.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.subtab).classList.add('active');
+  });
+});
 let RECIPES = [];       // built-in recipes from recipes.json — default status 'plan'
 let DISCOVERED = [];    // saved-from-Discover recipes — default status 'saved'
 let STATUS = {};        // Firestore overrides: { [recipeId]: 'plan' | 'saved' }
@@ -27,6 +37,48 @@ function showModal(innerHtml) {
 function closeModal() {
   const existing = document.getElementById('active-modal');
   if (existing) existing.remove();
+}
+
+// ---- Add your own recipe ----
+document.getElementById('add-custom-recipe-btn').addEventListener('click', () => {
+  showModal(`
+    <h3>Add your own recipe</h3>
+    <label class="muted" style="display:block;margin:10px 0 4px;">Title</label>
+    <input type="text" id="custom-title-input" placeholder="e.g. Grandma's fish pie">
+    <label class="muted" style="display:block;margin:12px 0 4px;">Ingredients <span class="muted-inline">— one per line</span></label>
+    <textarea id="custom-ingredients-input" rows="4" placeholder="500g potatoes&#10;2 fillets smoked haddock&#10;..."></textarea>
+    <label class="muted" style="display:block;margin:12px 0 4px;">Method <span class="muted-inline">— one step per line</span></label>
+    <textarea id="custom-instructions-input" rows="4" placeholder="Boil the potatoes...&#10;Poach the fish...&#10;..."></textarea>
+    <div class="card-actions" style="margin-top:16px;">
+      <button class="primary-btn" id="custom-save-btn">Save recipe</button>
+      <button class="secondary-btn" id="custom-cancel-btn">Cancel</button>
+    </div>`);
+  document.getElementById('custom-cancel-btn').addEventListener('click', closeModal);
+  document.getElementById('custom-save-btn').addEventListener('click', () => {
+    const title = document.getElementById('custom-title-input').value.trim();
+    const ingredients = document.getElementById('custom-ingredients-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const instructions = document.getElementById('custom-instructions-input').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!title || !ingredients.length || !instructions.length) {
+      alert('Add a title, at least one ingredient, and at least one step.');
+      return;
+    }
+    saveCustomRecipe(title, ingredients, instructions);
+    closeModal();
+  });
+});
+
+function saveCustomRecipe(title, ingredients, instructions) {
+  const ref = window.mealAppDb ? window.mealAppDb.collection('household').doc('saved-recipes') : null;
+  if (!ref) { alert('Sign in first to save recipes.'); return; }
+  const id = 'custom-' + Date.now();
+  const record = {
+    title, source: 'custom', thumb: null, ingredients,
+    instructions: instructions.join('\n'), savedAt: Date.now()
+  };
+  ref.set({ [id]: record }, { merge: true }).catch(err => {
+    console.error('Could not save recipe', err);
+    alert('Could not save — check your connection and try again.');
+  });
 }
 
 // A built-in recipe is 'plan' unless explicitly overridden to 'saved'.
@@ -165,6 +217,12 @@ function wireCardEvents(container) {
       if (typeof openDatePickerModal === 'function') openDatePickerModal(btn.dataset.id, btn.dataset.title);
     });
   });
+  container.querySelectorAll('.cookmode-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof startCookModeForRecipe === 'function') startCookModeForRecipe(btn.dataset.id, btn.dataset.variant);
+    });
+  });
 }
 
 function recipeCardHtml(r, context) {
@@ -173,10 +231,15 @@ function recipeCardHtml(r, context) {
   const calendarBtn = context === 'plan'
     ? `<button class="secondary-btn card-action-btn add-calendar-btn" data-id="${id}" data-title="${titleAttr}">📅 Add to calendar</button>`
     : '';
-  const actionBtn = context === 'plan'
+  const cookBtn = r.type === 'swap'
+    ? `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}" data-variant="his">👨‍🍳 Cook (His)</button>` +
+      `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}" data-variant="hers">👨‍🍳 Cook (Her)</button>`
+    : `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}">👨‍🍳 Cook mode</button>`;
+  const actionBtn = (context === 'plan'
     ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>${calendarBtn}`
     : `<button class="secondary-btn card-action-btn add-to-plan-btn" data-id="${id}">Add to plan</button>` +
-      (r.type === 'discovered' ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>` : '');
+      (r.type === 'discovered' ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>` : '')
+  ) + cookBtn;
 
   if (r.type === 'discovered') {
     return `
@@ -184,8 +247,8 @@ function recipeCardHtml(r, context) {
         ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb-wide" loading="lazy">` : ''}
         <div class="card-body">
           <h3>${r.title}</h3>
-          <div class="meta">Saved from Discover</div>
-          <div class="tag">discovered</div>
+          <div class="meta">${r.source === 'custom' ? 'Your own recipe' : 'Saved from Discover'}</div>
+          <div class="tag">${r.source === 'custom' ? 'custom' : 'discovered'}</div>
           <div class="details">
             <h4>Ingredients</h4>
             <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
@@ -246,7 +309,8 @@ function collectItems(recipes) {
       if (!seen.has(key)) { seen.add(key); items.push(key); }
     });
   });
-  return items;
+  // Anything already in the pantry doesn't need buying again.
+  return typeof isInPantry === 'function' ? items.filter(i => !isInPantry(i)) : items;
 }
 
 const shoppingDocRef = () =>
@@ -256,8 +320,19 @@ let shoppingUnsubscribe = null;
 
 function renderShoppingList(recipes) {
   const items = collectItems(recipes);
+  const rawCount = (() => {
+    const seen = new Set(); let n = 0;
+    recipes.forEach(r => {
+      const all = [...(r.ingredients || []), ...(r.baseIngredients || [])];
+      if (r.variants) all.push(r.variants.his.protein, r.variants.hers.protein);
+      all.forEach(i => { const k = i.trim(); if (!seen.has(k)) { seen.add(k); n++; } });
+    });
+    return n;
+  })();
+  const skipped = rawCount - items.length;
   const list = document.getElementById('shopping-list');
-  list.innerHTML = `<div class="card"><div id="shop-items"></div></div>`;
+  list.innerHTML = (skipped > 0 ? `<div class="note">${skipped} item${skipped === 1 ? '' : 's'} already in your pantry, left off this list.</div>` : '') +
+    `<div class="card"><div id="shop-items"></div></div>`;
   const container = document.getElementById('shop-items');
 
   function draw(checkedMap) {

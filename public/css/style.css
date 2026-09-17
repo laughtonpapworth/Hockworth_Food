@@ -264,6 +264,43 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 .planner-course{margin-bottom:12px;}
 .planner-course .card-body{padding:14px 16px;}
 
+/* ---- Shopping/Pantry sub-tabs ---- */
+.subtab-row{display:flex; gap:6px; margin-bottom:16px;}
+.subtab-btn{
+  flex:1; border:1px solid var(--border); background:var(--card); border-radius:10px;
+  padding:10px; font-weight:600; font-size:0.88rem; cursor:pointer; color:var(--text); font-family:inherit;
+}
+.subtab-btn.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+.subtab-panel{display:none;}
+.subtab-panel.active{display:block;}
+.pantry-add-row{display:flex; gap:8px; margin-bottom:12px;}
+.pantry-add-row input{
+  flex:1; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--card);
+  color:var(--text); font-family:inherit; font-size:0.9rem;
+}
+.pantry-remove-btn{
+  background:none; border:1px solid var(--border); border-radius:16px; padding:4px 10px;
+  font-size:0.75rem; color:var(--muted); cursor:pointer;
+}
+
+/* ---- Cook Mode (full-screen) ---- */
+.cookmode-overlay{
+  position:fixed; inset:0; background:var(--bg); z-index:100; display:flex; flex-direction:column;
+  padding:20px; padding-bottom:calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.cookmode-top{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.cookmode-close{background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--muted);}
+.cookmode-title{font-weight:800; font-size:1.05rem; flex:1; text-align:center;}
+.cookmode-progress{font-size:0.78rem; color:var(--muted); white-space:nowrap;}
+.cookmode-body{
+  flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; gap:22px; padding:20px 10px;
+}
+.cookmode-step-text{font-size:1.6rem; font-weight:700; line-height:1.4; max-width:520px;}
+.cookmode-timer{font-size:2.8rem; font-weight:800; color:var(--accent);}
+.cookmode-nav{display:flex; gap:10px;}
+.cookmode-nav button{flex:1; margin:0;}
+
 /* ---- Bottom nav ---- */
 .bottom-nav{
   position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--card);

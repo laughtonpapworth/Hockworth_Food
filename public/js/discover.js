@@ -220,6 +220,7 @@ function renderDiscoverResults(entries) {
         <div class="card-actions">
           <button class="secondary-btn card-action-btn add-plan-btn">Add to plan</button>
           <button class="secondary-btn card-action-btn add-saved-btn">Add to saved</button>
+          <button class="secondary-btn card-action-btn discover-cook-btn">👨‍🍳 Cook mode</button>
         </div>
       </div>`;
 
@@ -234,6 +235,10 @@ function renderDiscoverResults(entries) {
     card.querySelector('.add-saved-btn').addEventListener('click', e => {
       e.stopPropagation();
       saveDiscoveredRecipe(meal, ingredientsList, 'saved');
+    });
+    card.querySelector('.discover-cook-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      if (typeof openCookMode === 'function') openCookMode(splitIntoSteps(meal.strInstructions), meal.strMeal);
     });
     container.appendChild(card);
   });
@@ -355,10 +360,12 @@ function renderCourseResult(course, outcome) {
         <div class="card-actions">
           <button class="secondary-btn card-action-btn planner-add-plan">Add to plan</button>
           <button class="secondary-btn card-action-btn planner-add-saved">Add to saved</button>
+          <button class="secondary-btn card-action-btn planner-cook-btn">👨‍🍳 Cook mode</button>
         </div>
       </div>`;
     wrap.querySelector('.planner-add-plan').addEventListener('click', () => saveDiscoveredRecipe(meal, ingredientsList, 'plan'));
     wrap.querySelector('.planner-add-saved').addEventListener('click', () => saveDiscoveredRecipe(meal, ingredientsList, 'saved'));
+    wrap.querySelector('.planner-cook-btn').addEventListener('click', () => openCookMode(splitIntoSteps(meal.strInstructions), meal.strMeal));
   } else {
     const rows = outcome.perProfile.map(({ profile, result }) => {
       if (!result) {
@@ -389,7 +396,7 @@ function loadSavedRecipes() {
   window.mealAppDb.collection('household').doc('saved-recipes').onSnapshot(snap => {
     const saved = snap.exists ? snap.data() : {};
     const discovered = Object.entries(saved).map(([id, r]) => ({
-      id: 'discovered-' + id, title: r.title, type: 'discovered', thumb: r.thumb,
+      id: 'discovered-' + id, title: r.title, type: 'discovered', thumb: r.thumb, source: r.source || 'TheMealDB',
       ingredients: r.ingredients, instructionsText: r.instructions,
       servings: 4, prepMinutes: '?', cookMinutes: '?'
     }));

@@ -57,6 +57,7 @@
   <section id="saved" class="tab-panel">
     <div class="section-title">Saved</div>
     <div class="note">Recipes here don't feed the shopping list. Remove something from the Plan and it lands here; add something back whenever you like.</div>
+    <button type="button" id="add-custom-recipe-btn" class="secondary-btn">✍️ Add your own recipe</button>
     <div id="saved-list" class="card-grid"></div>
   </section>
 
@@ -103,10 +104,26 @@
   </section>
 
   <section id="shopping" class="tab-panel">
-    <div class="section-title">Shopping list</div>
-    <div class="note">Ticks sync live between both your phones.</div>
-    <button id="reset-shopping" class="secondary-btn">Reset list</button>
-    <div id="shopping-list" class="card-list"></div>
+    <div class="section-title">Shopping</div>
+    <div class="subtab-row">
+      <button type="button" class="subtab-btn active" data-subtab="tobuy-panel">🛒 To buy</button>
+      <button type="button" class="subtab-btn" data-subtab="pantry-panel">📦 Pantry</button>
+    </div>
+
+    <div id="tobuy-panel" class="subtab-panel active">
+      <div class="note">Ticks sync live between both your phones. Anything in your Pantry is automatically left off this list.</div>
+      <button id="reset-shopping" class="secondary-btn">Reset list</button>
+      <div id="shopping-list" class="card-list"></div>
+    </div>
+
+    <div id="pantry-panel" class="subtab-panel">
+      <div class="note">Things you already have stocked. Matching items are skipped when building the shopping list — remove something here once it runs out.</div>
+      <div class="pantry-add-row">
+        <input type="text" id="pantry-add-input" placeholder="e.g. rice, tinned tomatoes">
+        <button id="pantry-add-btn" class="secondary-btn">Add</button>
+      </div>
+      <div id="pantry-list" class="card-list"></div>
+    </div>
   </section>
 
   <section id="checker" class="tab-panel">
@@ -139,6 +156,23 @@
 </nav>
 </div>
 
+<div id="cookmode-overlay" class="cookmode-overlay" style="display:none;">
+  <div class="cookmode-top">
+    <button type="button" id="cookmode-close-btn" class="cookmode-close">✕</button>
+    <div id="cookmode-title" class="cookmode-title"></div>
+    <div id="cookmode-progress" class="cookmode-progress"></div>
+  </div>
+  <div class="cookmode-body">
+    <div id="cookmode-step-text" class="cookmode-step-text"></div>
+    <div id="cookmode-timer" class="cookmode-timer" style="display:none;"></div>
+    <button type="button" id="cookmode-timer-btn" class="secondary-btn" style="display:none;"></button>
+  </div>
+  <div class="cookmode-nav">
+    <button type="button" id="cookmode-prev-btn" class="secondary-btn">‹ Back</button>
+    <button type="button" id="cookmode-next-btn" class="primary-btn">Next ›</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
@@ -149,6 +183,8 @@
 <script src="js/discover.js"></script>
 <script src="js/calendar.js"></script>
 <script src="js/profiles.js"></script>
+<script src="js/pantry.js"></script>
+<script src="js/cookmode.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
