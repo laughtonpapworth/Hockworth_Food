@@ -359,6 +359,27 @@ async function handleSetupNext() {
 }
 
 // ---- Step: a single course ----
+// ---- Step: a single course ----
+const MEAT_FISH_CATEGORIES = ['Chicken', 'Beef', 'Pork', 'Seafood', 'Lamb', 'Goat'];
+const GARNISH_KEYWORDS = ['pickle', 'chutney', 'relish', 'marmalade', 'garnish', 'dressing', 'dip', 'jam'];
+
+function looksLikeGarnish(title) {
+  const lower = (title || '').toLowerCase();
+  return GARNISH_KEYWORDS.some(k => lower.includes(k));
+}
+
+// Excludes meat/fish categories from the Main course pool outright whenever
+// any currently-selected profile is vegan or vegetarian — a second, source-
+// level layer of protection alongside the ingredient-text check, so a meat
+// dish can never even be drawn as a candidate for that person.
+function courseCategoryPool(meta, profiles) {
+  if (meta.categories.length === 1) return meta.categories; // Starter/Dessert are fixed, single-category
+  const anyVeg = profiles.some(p => p.diet === 'vegan' || p.diet === 'vegetarian');
+  if (!anyVeg) return meta.categories;
+  const filtered = meta.categories.filter(c => !MEAT_FISH_CATEGORIES.includes(c));
+  return filtered.length ? filtered : meta.categories;
+}
+
 async function renderCourseStep(key) {
   const meta = COURSE_META[key];
   const stepNum = wizardSteps.indexOf(key);
@@ -374,12 +395,92 @@ async function renderCourseStep(key) {
     return;
   }
 
+  if (wizardDraft.courses[key].chosen) {
+    renderCourseChosenConfirmation(key, meta);
+    return;
+  }
+
   document.getElementById('wizard-body').innerHTML = `
     <div id="wizard-course-status" class="status-line">Finding options...</div>
     <div id="wizard-course-grid" class="planner-options-grid"></div>
-    <button type="button" id="wizard-refresh-btn" class="secondary-btn" style="width:100%; margin-top:12px;">🔄 New ideas</button>`;
+    <button type="button" id="wizard-refresh-btn" class="secondary-btn" style="width:100%; margin-top:12px;">🔄 New ideas</button>
+    <div class="wizard-alt-actions">
+      <button type="button" id="wizard-type-own-btn" class="secondary-btn">✍️ Type my own instead</button>
+      <button type="button" id="wizard-scan-own-btn" class="secondary-btn">📷 Scan a photo instead</button>
+    </div>`;
   document.getElementById('wizard-refresh-btn').addEventListener('click', () => loadCourseOptions(key, meta));
+  document.getElementById('wizard-type-own-btn').addEventListener('click', () => renderWizardManualForm(key, meta));
+  document.getElementById('wizard-scan-own-btn').addEventListener('click', () => renderWizardScanForm(key, meta));
   await loadCourseOptions(key, meta);
+}
+
+function renderCourseChosenConfirmation(key, meta) {
+  const chosen = wizardDraft.courses[key].chosen;
+  document.getElementById('wizard-body').innerHTML = `
+    <div class="note">✓ Using: <strong>${chosen.meal.strMeal}</strong></div>
+    <button type="button" class="secondary-btn" id="wizard-change-btn">Change this choice</button>`;
+  document.getElementById('wizard-change-btn').addEventListener('click', () => {
+    wizardDraft.courses[key].chosen = null;
+    renderCourseStep(key);
+  });
+}
+
+// ---- Type your own dish for this course ----
+function renderWizardManualForm(key, meta, prefill) {
+  const body = document.getElementById('wizard-body');
+  const t = prefill || { title: '', ingredients: [], instructions: [] };
+  body.innerHTML = `
+    <button type="button" class="secondary-btn" id="wizard-back-to-search">‹ Back to search results</button>
+    ${prefill ? '<div class="note" style="margin-top:10px;">Pulled from the photo — OCR isn\'t perfect, check it over.</div>' : ''}
+    <label class="muted" style="display:block;margin:12px 0 4px;">${meta.label} title</label>
+    <input type="text" id="wiz-own-title" value="${(t.title || '').replace(/"/g, '&quot;')}">
+    <label class="muted" style="display:block;margin:12px 0 4px;">Ingredients <span class="muted-inline">— one per line</span></label>
+    <textarea id="wiz-own-ingredients" rows="4">${(t.ingredients || []).join('\n')}</textarea>
+    <label class="muted" style="display:block;margin:12px 0 4px;">Method <span class="muted-inline">— one step per line</span></label>
+    <textarea id="wiz-own-instructions" rows="4">${(t.instructions || []).join('\n')}</textarea>
+    <button type="button" class="primary-btn" id="wiz-own-save" style="margin-top:14px;">Use this</button>`;
+  document.getElementById('wizard-back-to-search').addEventListener('click', () => renderCourseStep(key));
+  document.getElementById('wiz-own-save').addEventListener('click', () => {
+    const title = document.getElementById('wiz-own-title').value.trim();
+    const ingredients = document.getElementById('wiz-own-ingredients').value.split('\n').map(s => s.trim()).filter(Boolean);
+    const instructions = document.getElementById('wiz-own-instructions').value.split('\n').map(s => s.trim()).filter(Boolean);
+    if (!title || !ingredients.length) { alert('Add at least a title and one ingredient.'); return; }
+    wizardDraft.courses[key].chosen = {
+      meal: { strMeal: title, strMealThumb: null, strInstructions: instructions.join('\n') },
+      ingredientsList: ingredients,
+      ingredientsText: ingredients.join(', ')
+    };
+    renderCourseChosenConfirmation(key, meta);
+  });
+}
+
+// ---- Scan a photo for this course (reuses loadTesseractScript/parseRecipeText from app.js) ----
+function renderWizardScanForm(key, meta) {
+  const body = document.getElementById('wizard-body');
+  body.innerHTML = `
+    <button type="button" class="secondary-btn" id="wizard-back-to-search">‹ Back to search results</button>
+    <p class="muted" style="margin:12px 0;">Take or choose a photo of the dish's recipe for this course.</p>
+    <input type="file" accept="image/*" capture="environment" id="wiz-scan-input">
+    <div id="wiz-scan-status" class="status-line"></div>`;
+  document.getElementById('wizard-back-to-search').addEventListener('click', () => renderCourseStep(key));
+  document.getElementById('wiz-scan-input').addEventListener('change', async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const statusEl = document.getElementById('wiz-scan-status');
+    try {
+      statusEl.textContent = 'Loading the text reader (first time only)...';
+      if (!window.Tesseract) await loadTesseractScript();
+      statusEl.textContent = 'Reading the photo — this can take a moment...';
+      const worker = await Tesseract.createWorker('eng');
+      const { data: { text } } = await worker.recognize(file);
+      await worker.terminate();
+      statusEl.textContent = '';
+      renderWizardManualForm(key, meta, parseRecipeText(text));
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = 'Could not read that photo — try a clearer image, or type it in instead.';
+    }
+  });
 }
 
 async function loadCourseOptions(key, meta) {
@@ -390,42 +491,31 @@ async function loadCourseOptions(key, meta) {
   grid.innerHTML = '';
 
   const seenIds = wizardDraft.courses[key].seenIds;
-  let options = await findCourseOptions(meta.categories, profiles, seenIds, 3);
-  let widened = false;
-
-  if (options.length < 3) {
-    if (!allCategoryNames) {
-      try {
-        const data = await fetch(`${MEALDB_BASE}/categories.php`).then(r => r.json());
-        allCategoryNames = (data.categories || []).map(c => c.strCategory);
-      } catch { allCategoryNames = meta.categories; }
-    }
-    const extra = await findCourseOptions(allCategoryNames, profiles, new Set([...seenIds, ...options.map(o => o.meal.idMeal)]), 3 - options.length);
-    if (extra.length) { options = options.concat(extra); widened = true; }
-  }
-
+  const pool = courseCategoryPool(meta, profiles);
+  const options = await findCourseOptions(pool, profiles, seenIds, 3);
   options.forEach(o => seenIds.add(o.meal.idMeal));
 
   if (!options.length) {
-    statusEl.textContent = "Couldn't find anything that works for everyone, even with a wider search — try New ideas again, or adjust profiles.";
+    statusEl.textContent = "Nothing found that works for everyone in this category — try New ideas again, or add your own dish below.";
     return;
   }
   statusEl.textContent = options.length < 3
-    ? `Only found ${options.length} option${options.length === 1 ? '' : 's'}${widened ? ' (widened the search)' : ''}.`
-    : widened ? 'Found 3 (widened the search to fill this out).' : 'Found 3 — pick one:';
+    ? `Only found ${options.length} option${options.length === 1 ? '' : 's'} that work for everyone — try New ideas, or add your own below.`
+    : 'Found 3 — pick one, or add your own below:';
   renderOptionCards(grid, options, key, profiles);
 }
 
 async function findCourseOptions(categoryPool, profiles, seenIds, count) {
   const found = [];
   const localSeen = new Set(seenIds);
-  for (let attempt = 0; attempt < 20 && found.length < count; attempt++) {
+  for (let attempt = 0; attempt < 25 && found.length < count; attempt++) {
     const category = categoryPool[Math.floor(Math.random() * categoryPool.length)];
     const listRes = await fetch(`${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(r => r.json()).catch(() => null);
     if (!listRes || !listRes.meals || !listRes.meals.length) continue;
     const pick = listRes.meals[Math.floor(Math.random() * listRes.meals.length)];
     if (localSeen.has(pick.idMeal)) continue;
     localSeen.add(pick.idMeal);
+    if (looksLikeGarnish(pick.strMeal)) continue;
     const meal = await fetchMealDetail(pick.idMeal);
     if (!meal) continue;
     const ingredientsList = extractIngredientsList(meal);
@@ -447,9 +537,6 @@ function renderOptionCards(grid, options, courseKey, profiles) {
   options.forEach(opt => {
     const card = document.createElement('div');
     card.className = 'planner-option-card';
-    if (wizardDraft.courses[courseKey].chosen && wizardDraft.courses[courseKey].chosen.meal.idMeal === opt.meal.idMeal) {
-      card.classList.add('chosen');
-    }
     card.innerHTML = `
       <img src="${opt.meal.strMealThumb}" class="planner-option-thumb" loading="lazy" alt="">
       <div class="planner-option-title">${opt.meal.strMeal}</div>
@@ -457,12 +544,13 @@ function renderOptionCards(grid, options, courseKey, profiles) {
       <button type="button" class="secondary-btn planner-choose-btn">Choose</button>`;
     card.querySelector('.planner-choose-btn').addEventListener('click', () => {
       wizardDraft.courses[courseKey].chosen = opt;
-      grid.querySelectorAll('.planner-option-card').forEach(c => c.classList.remove('chosen'));
-      card.classList.add('chosen');
+      renderCourseChosenConfirmation(courseKey, COURSE_META[courseKey]);
     });
     grid.appendChild(card);
   });
 }
+
+// ---- Step: review + save ----
 
 // ---- Step: review + save ----
 function renderReviewStep() {
