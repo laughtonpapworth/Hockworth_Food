@@ -62,14 +62,19 @@
 
   <section id="discover" class="tab-panel">
     <div class="section-title">Find something new</div>
-    <div class="note">Every result is checked against both your restrictions automatically — ✅ safe, ⚠️ caution (FODMAP), ❌ avoid, shown right on the card.</div>
+    <div class="note">Pick who you're finding food for below — results are filtered to what's actually safe for everyone selected, not just labelled.</div>
+
+    <div id="discover-profile-select" class="profile-select-row"></div>
 
     <div class="search-row">
       <input type="text" id="discover-ingredient-input" placeholder="Search an ingredient — chicken, lentils, sweet potato...">
       <button id="discover-search-btn" class="primary-btn">Search</button>
     </div>
 
-    <div id="category-chips" class="filter-row"></div>
+    <div class="dropdown-row">
+      <select id="category-select"><option value="">Any category</option></select>
+      <select id="area-select"><option value="">Any cuisine</option></select>
+    </div>
 
     <div class="discover-actions">
       <button id="discover-random-btn" class="secondary-btn">🎲 Show me a batch of ideas</button>
@@ -77,6 +82,18 @@
 
     <div id="discover-status" class="status-line"></div>
     <div id="discover-results" class="card-grid"></div>
+
+    <div class="planner-box">
+      <div class="section-title" style="font-size:1.1rem;">🍽️ Build a meal</div>
+      <div class="note">Picks a starter/main(/dessert) that's safe for everyone selected above. If nothing fits everyone in a course, it finds a separate dish per person instead.</div>
+      <div class="filter-row">
+        <button type="button" class="filter-btn course-count-btn active" data-count="2">2 courses</button>
+        <button type="button" class="filter-btn course-count-btn" data-count="3">3 courses</button>
+      </div>
+      <button type="button" id="build-meal-btn" class="primary-btn">Build meal</button>
+      <div id="meal-planner-status" class="status-line"></div>
+      <div id="meal-planner-results" class="card-list"></div>
+    </div>
   </section>
 
   <section id="calendar" class="tab-panel">

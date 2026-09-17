@@ -38,6 +38,9 @@ function checkForProfile(text, profile) {
     if (matches.length) hits.ibs = matches;
   }
 
+  (profile.customAllergies || []).forEach(word => {
+    if (word && lower.includes(word.toLowerCase())) hits.allergy.push({ group: 'Other', matches: [word] });
+  });
   (profile.dislikes || []).forEach(word => {
     if (word && lower.includes(word.toLowerCase())) hits.dislike.push(word);
   });

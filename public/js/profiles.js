@@ -25,13 +25,14 @@ function loadProfiles() {
       // household was already using, so nothing is lost by switching over
       // to the new profile system.
       PROFILES = [
-        { id: 'p_' + Date.now() + '_a', name: 'Laughton', diet: 'meat', allergies: ['wheat'], ibs: true, dislikes: ['beef'], likes: [] },
-        { id: 'p_' + Date.now() + '_b', name: 'Laura', diet: 'vegetarian', allergies: ['dairy', 'soy'], ibs: false, dislikes: ['mushroom', 'courgette', 'aubergine', 'tofu'], likes: [] }
+        { id: 'p_' + Date.now() + '_a', name: 'Laughton', diet: 'meat', allergies: ['wheat'], ibs: true, customAllergies: ['beef'], dislikes: [], likes: [] },
+        { id: 'p_' + Date.now() + '_b', name: 'Laura', diet: 'vegetarian', allergies: ['dairy', 'soy'], ibs: false, customAllergies: [], dislikes: ['mushroom', 'courgette', 'aubergine', 'tofu'], likes: [] }
       ];
       saveProfiles();
     }
     renderProfiles();
     if (typeof refreshAll === 'function') refreshAll();
+    if (typeof renderDiscoverProfileSelector === 'function') renderDiscoverProfileSelector();
   }, err => console.error('Could not load profiles', err));
 }
 
@@ -53,7 +54,7 @@ document.getElementById('profiles-back-btn').addEventListener('click', () => {
 });
 
 document.getElementById('add-profile-btn').addEventListener('click', () => {
-  PROFILES.push({ id: 'p_' + Date.now(), name: 'New person', diet: 'meat', allergies: [], ibs: false, dislikes: [], likes: [] });
+  PROFILES.push({ id: 'p_' + Date.now(), name: 'New person', diet: 'meat', allergies: [], ibs: false, customAllergies: [], dislikes: [], likes: [] });
   saveProfiles();
   renderProfiles();
 });
@@ -94,6 +95,12 @@ function renderProfiles() {
           <input type="checkbox" data-idx="${idx}" data-ibs="1" ${p.ibs ? 'checked' : ''}>
           IBS (FODMAP caution)
         </label>
+      </div>
+
+      <div class="profile-section-label">Other allergies / intolerances <span class="muted-inline">— e.g. beef, sesame seeds</span></div>
+      <div class="tag-input" data-idx="${idx}" data-kind="customAllergies">
+        <div class="tag-chips">${(p.customAllergies || []).map(w => tagChipHtml(w)).join('')}</div>
+        <input type="text" class="tag-add-input" placeholder="Type and press Enter">
       </div>
 
       <div class="profile-section-label">Dislikes <span class="muted-inline">— excluded from results</span></div>
