@@ -261,134 +261,178 @@ function saveDiscoveredRecipe(meal, ingredientsList, targetStatus) {
     .catch(err => { console.error(err); alert('Could not save — check your connection and try again.'); });
 }
 
-// ---- Meal planner (course builder) ----
-const COURSE_CATEGORY_MAP = {
-  starter: ['Starter'],
-  main: ['Chicken', 'Beef', 'Pork', 'Seafood', 'Pasta', 'Vegetarian', 'Vegan', 'Lamb', 'Miscellaneous', 'Goat'],
-  dessert: ['Dessert']
+// ---- Dinner party planner (named, multi-course, guest-scaled events) ----
+const COURSE_META = {
+  starter:    { label: 'Starter',        emoji: '🥗', type: 'recipe', categories: ['Starter'] },
+  main:       { label: 'Main',           emoji: '🍽️', type: 'recipe', categories: ['Chicken', 'Beef', 'Pork', 'Seafood', 'Pasta', 'Vegetarian', 'Vegan', 'Lamb', 'Miscellaneous', 'Goat'] },
+  dessert:    { label: 'Dessert',        emoji: '🍰', type: 'recipe', categories: ['Dessert'] },
+  cheese:     { label: 'Cheese course',  emoji: '🧀', type: 'note', placeholder: 'e.g. Brie, cheddar, oatcakes, grapes, chutney' },
+  coffeeCake: { label: 'Coffee & cake',  emoji: '☕', type: 'note', placeholder: 'e.g. Coffee, chocolate cake' }
 };
-let plannerCourseCount = 2;
 
-document.querySelectorAll('.course-count-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.course-count-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    plannerCourseCount = parseInt(btn.dataset.count, 10);
-  });
+let eventDraft = null;
+
+document.querySelectorAll('.course-toggle').forEach(btn => {
+  btn.addEventListener('click', () => btn.classList.toggle('active'));
 });
 
-document.getElementById('build-meal-btn').addEventListener('click', buildMeal);
+document.getElementById('build-meal-btn').addEventListener('click', startBuildingEvent);
+document.getElementById('save-event-btn').addEventListener('click', saveEventDraft);
 
 function setPlannerStatus(text) {
   document.getElementById('meal-planner-status').textContent = text;
 }
 
-async function buildMeal() {
+async function startBuildingEvent() {
+  const name = document.getElementById('event-name-input').value.trim();
+  const guests = parseInt(document.getElementById('event-guests-input').value, 10);
+  if (!name) { alert('Give this event a name first — e.g. "Sarah\'s Birthday Dinner".'); return; }
+  if (!guests || guests < 1) { alert('Enter how many guests are coming.'); return; }
+
   const profiles = getSelectedDiscoverProfiles();
   if (!profiles.length) { alert('Select at least one person above first.'); return; }
+
+  const activeCourses = Array.from(document.querySelectorAll('.course-toggle.active')).map(b => b.dataset.course);
+  if (!activeCourses.length) { alert('Pick at least one course.'); return; }
+
   try { await window.rulesReady; } catch {}
 
-  const courses = plannerCourseCount === 3 ? ['starter', 'main', 'dessert'] : ['starter', 'main'];
+  eventDraft = { name, guests, courses: {} };
   document.getElementById('meal-planner-results').innerHTML = '';
+  document.getElementById('save-event-btn').style.display = 'none';
+  setPlannerStatus('');
 
-  for (const course of courses) {
-    setPlannerStatus(`Finding your ${course}...`);
-    const outcome = await findCourseRecipe(course, profiles);
-    renderCourseResult(course, outcome);
-  }
-  setPlannerStatus('Done — add anything you like to your plan or saved list below.');
-}
-
-async function findCourseRecipe(course, profiles) {
-  const pool = COURSE_CATEGORY_MAP[course];
-
-  for (let attempt = 0; attempt < 10; attempt++) {
-    const category = pool[Math.floor(Math.random() * pool.length)];
-    const found = await tryRandomFromCategory(category, profiles);
-    if (found) return { type: 'shared', ...found };
-  }
-
-  // No single dish worked for everyone — find one each instead.
-  const perProfile = [];
-  for (const p of profiles) {
-    let found = null;
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const category = pool[Math.floor(Math.random() * pool.length)];
-      const result = await tryRandomFromCategory(category, [p]);
-      if (result) { found = result; break; }
+  for (const key of activeCourses) {
+    const meta = COURSE_META[key];
+    if (meta.type === 'note') {
+      eventDraft.courses[key] = { type: 'note', text: '' };
+      renderNoteCourseSection(key, meta);
+    } else {
+      eventDraft.courses[key] = { type: 'recipe', chosen: null, seenIds: new Set() };
+      await renderRecipeCourseSection(key, meta, profiles);
     }
-    perProfile.push({ profile: p, result: found });
   }
-  return { type: 'per-profile', perProfile };
+  document.getElementById('save-event-btn').style.display = '';
 }
 
-async function tryRandomFromCategory(category, profiles) {
-  try {
-    const listRes = await fetch(`${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(r => r.json());
-    if (!listRes.meals || !listRes.meals.length) return null;
+function renderNoteCourseSection(key, meta) {
+  const container = document.getElementById('meal-planner-results');
+  const section = document.createElement('div');
+  section.className = 'planner-section';
+  section.innerHTML = `
+    <div class="planner-course-header"><span>${meta.emoji} ${meta.label}</span></div>
+    <textarea class="note-course-input" rows="2" placeholder="${meta.placeholder}"></textarea>`;
+  section.querySelector('.note-course-input').addEventListener('input', e => {
+    eventDraft.courses[key].text = e.target.value;
+  });
+  container.appendChild(section);
+}
+
+async function renderRecipeCourseSection(key, meta, profiles) {
+  const container = document.getElementById('meal-planner-results');
+  const section = document.createElement('div');
+  section.className = 'planner-section';
+  section.innerHTML = `
+    <div class="planner-course-header">
+      <span>${meta.emoji} ${meta.label}</span>
+      <button type="button" class="secondary-btn planner-refresh-btn">🔄 New ideas</button>
+    </div>
+    <div class="planner-options-status status-line">Finding options...</div>
+    <div class="planner-options-grid"></div>`;
+  container.appendChild(section);
+  section.querySelector('.planner-refresh-btn').addEventListener('click', () => loadCourseOptions(key, meta, profiles, section));
+  await loadCourseOptions(key, meta, profiles, section);
+}
+
+async function loadCourseOptions(key, meta, profiles, section) {
+  const statusEl = section.querySelector('.planner-options-status');
+  const grid = section.querySelector('.planner-options-grid');
+  statusEl.textContent = 'Finding options...';
+  grid.innerHTML = '';
+  const seenIds = eventDraft.courses[key].seenIds;
+  const options = await findCourseOptions(meta.categories, profiles, seenIds, 3);
+  options.forEach(o => seenIds.add(o.meal.idMeal));
+
+  if (!options.length) {
+    statusEl.textContent = "Couldn't find anything new that works for everyone — try again shortly, or adjust profiles.";
+    return;
+  }
+  statusEl.textContent = options.length < 3 ? `Only found ${options.length} option${options.length === 1 ? '' : 's'} that work for everyone.` : 'Pick one:';
+  renderOptionCards(grid, options, key, profiles);
+}
+
+async function findCourseOptions(categoryPool, profiles, seenIds, count) {
+  const found = [];
+  const localSeen = new Set(seenIds);
+  for (let attempt = 0; attempt < 20 && found.length < count; attempt++) {
+    const category = categoryPool[Math.floor(Math.random() * categoryPool.length)];
+    const listRes = await fetch(`${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`).then(r => r.json()).catch(() => null);
+    if (!listRes || !listRes.meals || !listRes.meals.length) continue;
     const pick = listRes.meals[Math.floor(Math.random() * listRes.meals.length)];
+    if (localSeen.has(pick.idMeal)) continue;
+    localSeen.add(pick.idMeal);
     const meal = await fetchMealDetail(pick.idMeal);
-    if (!meal) return null;
+    if (!meal) continue;
     const ingredientsList = extractIngredientsList(meal);
     const ingredientsText = ingredientsList.join(', ');
     const verdict = checkIngredientsForProfiles(ingredientsText, profiles);
     const allOk = Object.values(verdict).every(v => v.status !== 'avoid');
-    return allOk ? { meal, ingredientsList, ingredientsText } : null;
-  } catch (e) {
-    console.error(e);
-    return null;
+    if (allOk) found.push({ meal, ingredientsList, ingredientsText });
   }
+  return found;
 }
 
-function courseLabel(course) {
-  return course === 'starter' ? 'Starter' : course === 'main' ? 'Main' : 'Dessert';
+function compactBadges(ingredientsText, profiles) {
+  if (!(typeof checkIngredientsForProfiles === 'function' && window.RULES && profiles.length)) return '';
+  const verdict = checkIngredientsForProfiles(ingredientsText, profiles);
+  return Object.values(verdict).map(r => r.status === 'ok' ? '✅' : r.status === 'caution' ? '⚠️' : '❌').join(' ');
 }
 
-function renderCourseResult(course, outcome) {
-  const container = document.getElementById('meal-planner-results');
-  const wrap = document.createElement('div');
-  wrap.className = 'card planner-course';
-
-  if (outcome.type === 'shared') {
-    const { meal, ingredientsList, ingredientsText } = outcome;
-    wrap.innerHTML = `
-      <div class="card-body">
-        <div class="tag">${courseLabel(course)} · shared</div>
-        <img src="${meal.strMealThumb}" alt="" class="discover-thumb-wide" loading="lazy" style="margin-top:8px; border-radius:10px;">
-        <h3>${meal.strMeal}</h3>
-        <div class="badges">${badgesForIngredients(ingredientsText)}</div>
-        <div class="card-actions">
-          <button class="secondary-btn card-action-btn planner-add-plan">Add to plan</button>
-          <button class="secondary-btn card-action-btn planner-add-saved">Add to saved</button>
-          <button class="secondary-btn card-action-btn planner-cook-btn">👨‍🍳 Cook mode</button>
-        </div>
-      </div>`;
-    wrap.querySelector('.planner-add-plan').addEventListener('click', () => saveDiscoveredRecipe(meal, ingredientsList, 'plan'));
-    wrap.querySelector('.planner-add-saved').addEventListener('click', () => saveDiscoveredRecipe(meal, ingredientsList, 'saved'));
-    wrap.querySelector('.planner-cook-btn').addEventListener('click', () => openCookMode(splitIntoSteps(meal.strInstructions), meal.strMeal));
-  } else {
-    const rows = outcome.perProfile.map(({ profile, result }) => {
-      if (!result) {
-        return `<div class="who"><strong>${profile.name}</strong>Nothing found that works — try again or adjust their profile.</div>`;
-      }
-      return `<div class="who"><strong>${profile.name}: ${result.meal.strMeal}</strong>
-        <div class="card-actions" style="margin-top:8px;">
-          <button class="secondary-btn card-action-btn" data-action="plan">Add to plan</button>
-          <button class="secondary-btn card-action-btn" data-action="saved">Add to saved</button>
-        </div></div>`;
-    }).join('');
-    wrap.innerHTML = `<div class="card-body"><div class="tag">${courseLabel(course)} · different meals</div>${rows}</div>`;
-    wrap.querySelectorAll('.who').forEach((row, i) => {
-      const result = outcome.perProfile[i].result;
-      if (!result) return;
-      row.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => saveDiscoveredRecipe(result.meal, result.ingredientsList, btn.dataset.action));
-      });
+function renderOptionCards(grid, options, courseKey, profiles) {
+  options.forEach(opt => {
+    const card = document.createElement('div');
+    card.className = 'planner-option-card';
+    card.innerHTML = `
+      <img src="${opt.meal.strMealThumb}" class="planner-option-thumb" loading="lazy" alt="">
+      <div class="planner-option-title">${opt.meal.strMeal}</div>
+      <div class="planner-option-badge">${compactBadges(opt.ingredientsText, profiles)}</div>
+      <button type="button" class="secondary-btn planner-choose-btn">Choose</button>`;
+    card.querySelector('.planner-choose-btn').addEventListener('click', () => {
+      eventDraft.courses[courseKey] = { type: 'recipe', chosen: opt, seenIds: eventDraft.courses[courseKey].seenIds };
+      grid.querySelectorAll('.planner-option-card').forEach(c => c.classList.remove('chosen'));
+      card.classList.add('chosen');
     });
-  }
-
-  container.appendChild(wrap);
+    grid.appendChild(card);
+  });
 }
+
+function saveEventDraft() {
+  if (!eventDraft) return;
+  const missing = Object.entries(eventDraft.courses).filter(([k, c]) => c.type === 'recipe' && !c.chosen);
+  if (missing.length) {
+    alert(`Choose a dish for: ${missing.map(([k]) => COURSE_META[k].label).join(', ')}`);
+    return;
+  }
+  const coursesToSave = {};
+  Object.entries(eventDraft.courses).forEach(([key, c]) => {
+    if (c.type === 'note') {
+      coursesToSave[key] = { type: 'note', label: COURSE_META[key].label, text: c.text || '' };
+    } else {
+      coursesToSave[key] = {
+        type: 'recipe', label: COURSE_META[key].label,
+        title: c.chosen.meal.strMeal, thumb: c.chosen.meal.strMealThumb,
+        ingredients: c.chosen.ingredientsList, instructions: c.chosen.meal.strInstructions || ''
+      };
+    }
+  });
+  if (typeof saveEvent === 'function') saveEvent(eventDraft.name, eventDraft.guests, coursesToSave);
+  eventDraft = null;
+  document.getElementById('meal-planner-results').innerHTML = '';
+  document.getElementById('save-event-btn').style.display = 'none';
+  document.getElementById('event-name-input').value = '';
+  alert('Event saved — find its shopping list under Shopping → 🎉 Events.');
+}
+
 
 // ---- Merge saved/discovered recipes into the main Recipes tab ----
 function loadSavedRecipes() {

@@ -85,15 +85,29 @@
     <div id="discover-results" class="card-grid"></div>
 
     <div class="planner-box">
-      <div class="section-title" style="font-size:1.1rem;">🍽️ Build a meal</div>
-      <div class="note">Picks a starter/main(/dessert) that's safe for everyone selected above. If nothing fits everyone in a course, it finds a separate dish per person instead.</div>
+      <div class="section-title" style="font-size:1.1rem;">🎉 Plan a dinner party</div>
+      <div class="note">Build a named, multi-course meal for a specific headcount — kept completely separate from your weekly Plan, with its own shopping list scaled to how many people are coming.</div>
+
+      <label class="muted" style="display:block; margin-bottom:4px;">Event name</label>
+      <input type="text" id="event-name-input" placeholder="e.g. Sarah's Birthday Dinner" style="width:100%; margin-bottom:12px;">
+
+      <label class="muted" style="display:block; margin-bottom:4px;">Guests <span class="muted-inline">— recipes assume 4 servings by default</span></label>
+      <input type="number" id="event-guests-input" min="1" value="4" style="width:100%; margin-bottom:12px;">
+
+      <label class="muted" style="display:block; margin-bottom:6px;">Courses</label>
       <div class="filter-row">
-        <button type="button" class="filter-btn course-count-btn active" data-count="2">2 courses</button>
-        <button type="button" class="filter-btn course-count-btn" data-count="3">3 courses</button>
+        <button type="button" class="filter-btn course-toggle active" data-course="starter">Starter</button>
+        <button type="button" class="filter-btn course-toggle active" data-course="main">Main</button>
+        <button type="button" class="filter-btn course-toggle active" data-course="dessert">Dessert</button>
+        <button type="button" class="filter-btn course-toggle" data-course="cheese">Cheese</button>
+        <button type="button" class="filter-btn course-toggle" data-course="coffeeCake">Coffee &amp; cake</button>
       </div>
-      <button type="button" id="build-meal-btn" class="primary-btn">Build meal</button>
+
+      <button type="button" id="build-meal-btn" class="primary-btn" style="margin-top:12px;">Start building</button>
       <div id="meal-planner-status" class="status-line"></div>
-      <div id="meal-planner-results" class="card-list"></div>
+      <div id="meal-planner-results"></div>
+
+      <button type="button" id="save-event-btn" class="primary-btn" style="display:none; margin-top:16px;">Save this event</button>
     </div>
   </section>
 
@@ -108,6 +122,7 @@
     <div class="subtab-row">
       <button type="button" class="subtab-btn active" data-subtab="tobuy-panel">🛒 To buy</button>
       <button type="button" class="subtab-btn" data-subtab="pantry-panel">📦 Pantry</button>
+      <button type="button" class="subtab-btn" data-subtab="events-panel">🎉 Events</button>
     </div>
 
     <div id="tobuy-panel" class="subtab-panel active">
@@ -123,6 +138,12 @@
         <button id="pantry-add-btn" class="secondary-btn">Add</button>
       </div>
       <div id="pantry-list" class="card-list"></div>
+    </div>
+
+    <div id="events-panel" class="subtab-panel">
+      <div class="note">Each saved dinner party gets its own shopping list, scaled for its guest count — completely separate from your weekly list above.</div>
+      <div id="events-picker" class="filter-row"></div>
+      <div id="event-shopping-detail"></div>
     </div>
   </section>
 
@@ -184,6 +205,7 @@
 <script src="js/calendar.js"></script>
 <script src="js/profiles.js"></script>
 <script src="js/pantry.js"></script>
+<script src="js/events.js"></script>
 <script src="js/cookmode.js"></script>
 <script>
 if ('serviceWorker' in navigator) {

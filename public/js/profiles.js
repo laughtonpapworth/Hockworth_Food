@@ -91,16 +91,19 @@ function renderProfiles() {
             <input type="checkbox" data-idx="${idx}" data-allergy="${key}" ${(p.allergies || []).includes(key) ? 'checked' : ''}>
             ${ALLERGY_LABELS[key]}
           </label>`).join('')}
+        ${(p.customAllergies || []).map(term => `
+          <label class="allergy-check">
+            <input type="checkbox" data-idx="${idx}" data-custom-allergy="${term.replace(/"/g, '&quot;')}" checked>
+            ${term}
+          </label>`).join('')}
         <label class="allergy-check allergy-ibs">
           <input type="checkbox" data-idx="${idx}" data-ibs="1" ${p.ibs ? 'checked' : ''}>
           IBS (FODMAP caution)
         </label>
       </div>
-
-      <div class="profile-section-label">Other allergies / intolerances <span class="muted-inline">— e.g. beef, sesame seeds</span></div>
-      <div class="tag-input" data-idx="${idx}" data-kind="customAllergies">
-        <div class="tag-chips">${(p.customAllergies || []).map(w => tagChipHtml(w)).join('')}</div>
-        <input type="text" class="tag-add-input" placeholder="Type and press Enter">
+      <div class="add-custom-allergy-row" data-idx="${idx}">
+        <input type="text" class="add-custom-allergy-input" placeholder="Add another allergy/intolerance...">
+        <button type="button" class="secondary-btn add-custom-allergy-btn">Add</button>
       </div>
 
       <div class="profile-section-label">Dislikes <span class="muted-inline">— excluded from results</span></div>
@@ -167,6 +170,34 @@ function wireProfileEvents(container) {
       PROFILES[box.dataset.idx].ibs = box.checked;
       saveProfiles();
     });
+  });
+
+  container.querySelectorAll('input[type="checkbox"][data-custom-allergy]').forEach(box => {
+    box.addEventListener('change', () => {
+      if (box.checked) return; // custom entries start checked; only unticking does anything
+      const p = PROFILES[box.dataset.idx];
+      p.customAllergies = (p.customAllergies || []).filter(t => t !== box.dataset.customAllergy);
+      saveProfiles();
+      renderProfiles();
+    });
+  });
+
+  container.querySelectorAll('.add-custom-allergy-row').forEach(row => {
+    const idx = row.dataset.idx;
+    const input = row.querySelector('.add-custom-allergy-input');
+    const btn = row.querySelector('.add-custom-allergy-btn');
+    function addCustomAllergy() {
+      const val = input.value.trim().toLowerCase();
+      if (!val) return;
+      const p = PROFILES[idx];
+      p.customAllergies = p.customAllergies || [];
+      if (!p.customAllergies.includes(val)) p.customAllergies.push(val);
+      input.value = '';
+      saveProfiles();
+      renderProfiles();
+    }
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addCustomAllergy(); } });
+    btn.addEventListener('click', addCustomAllergy);
   });
 
   container.querySelectorAll('.tag-input').forEach(wrap => {
