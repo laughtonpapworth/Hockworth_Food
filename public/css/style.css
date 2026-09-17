@@ -354,10 +354,13 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 .wizard-body{
   flex:1; overflow-y:auto; padding:16px 4px; text-align:left; display:flex; flex-direction:column;
 }
-.wizard-body input, .wizard-body textarea{
+.wizard-body input:not([type="checkbox"]), .wizard-body textarea{
   border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--card);
   color:var(--text); font-family:inherit; font-size:0.9rem; width:100%;
 }
+.wizard-body input[type="checkbox"]{width:20px; height:20px; flex-shrink:0; accent-color:var(--accent);}
+.wizard-body .allergy-grid{grid-template-columns:1fr; gap:4px;}
+.wizard-body .allergy-check{gap:10px;}
 .wizard-body textarea{width:100%;}
 
 /* ---- Bottom nav ---- */

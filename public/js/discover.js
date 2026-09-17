@@ -371,18 +371,20 @@ function showGuestForm() {
   area.style.display = '';
   area.innerHTML = `
     <input type="text" id="guest-name-input" placeholder="Guest's name" style="margin-top:10px;">
-    <div class="diet-toggle" style="margin-top:8px;">
+    <div class="profile-section-label" style="margin-top:14px;">Diet type</div>
+    <div class="diet-toggle">
       <button type="button" class="guest-diet-btn active" data-diet="meat">Meat-eater</button>
       <button type="button" class="guest-diet-btn" data-diet="vegetarian">Vegetarian</button>
       <button type="button" class="guest-diet-btn" data-diet="vegan">Vegan</button>
     </div>
-    <div class="allergy-grid" style="margin-top:8px;">
+    <div class="profile-section-label" style="margin-top:14px;">Allergies &amp; intolerances</div>
+    <div class="allergy-grid">
       ${ALLERGY_KEYS.map(k => `<label class="allergy-check"><input type="checkbox" data-guest-allergy="${k}"> ${ALLERGY_LABELS[k]}</label>`).join('')}
       <label class="allergy-check allergy-ibs"><input type="checkbox" id="guest-ibs-check"> IBS (FODMAP caution)</label>
     </div>
-    <input type="text" id="guest-dislikes-input" placeholder="Dislikes (comma separated)" style="margin-top:8px;">
-    <input type="text" id="guest-likes-input" placeholder="Likes (comma separated)" style="margin-top:8px;">
-    <button type="button" id="guest-save-btn" class="primary-btn" style="margin-top:10px;">Add guest</button>`;
+    <input type="text" id="guest-dislikes-input" placeholder="Dislikes (comma separated)" style="margin-top:14px;">
+    <input type="text" id="guest-likes-input" placeholder="Likes (comma separated)" style="margin-top:10px;">
+    <button type="button" id="guest-save-btn" class="primary-btn" style="margin-top:14px;">Add guest</button>`;
 
   area.querySelectorAll('.guest-diet-btn').forEach(btn => {
     btn.addEventListener('click', () => {
