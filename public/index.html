@@ -86,28 +86,8 @@
 
     <div class="planner-box">
       <div class="section-title" style="font-size:1.1rem;">🎉 Plan a dinner party</div>
-      <div class="note">Build a named, multi-course meal for a specific headcount — kept completely separate from your weekly Plan, with its own shopping list scaled to how many people are coming.</div>
-
-      <label class="muted" style="display:block; margin-bottom:4px;">Event name</label>
-      <input type="text" id="event-name-input" placeholder="e.g. Sarah's Birthday Dinner" style="width:100%; margin-bottom:12px;">
-
-      <label class="muted" style="display:block; margin-bottom:4px;">Guests <span class="muted-inline">— recipes assume 4 servings by default</span></label>
-      <input type="number" id="event-guests-input" min="1" value="4" style="width:100%; margin-bottom:12px;">
-
-      <label class="muted" style="display:block; margin-bottom:6px;">Courses</label>
-      <div class="filter-row">
-        <button type="button" class="filter-btn course-toggle active" data-course="starter">Starter</button>
-        <button type="button" class="filter-btn course-toggle active" data-course="main">Main</button>
-        <button type="button" class="filter-btn course-toggle active" data-course="dessert">Dessert</button>
-        <button type="button" class="filter-btn course-toggle" data-course="cheese">Cheese</button>
-        <button type="button" class="filter-btn course-toggle" data-course="coffeeCake">Coffee &amp; cake</button>
-      </div>
-
-      <button type="button" id="build-meal-btn" class="primary-btn" style="margin-top:12px;">Start building</button>
-      <div id="meal-planner-status" class="status-line"></div>
-      <div id="meal-planner-results"></div>
-
-      <button type="button" id="save-event-btn" class="primary-btn" style="display:none; margin-top:16px;">Save this event</button>
+      <div class="note">Build a named, multi-course meal for a specific headcount, step by step — kept completely separate from your weekly Plan, with its own shopping list scaled to how many people are coming.</div>
+      <button type="button" id="open-party-wizard-btn" class="primary-btn">Start planning a dinner party</button>
     </div>
   </section>
 
@@ -175,6 +155,19 @@
   <button type="button" class="nav-btn" data-tab="shopping"><span class="nav-icon">🛒</span><span>Shopping</span></button>
   <button type="button" class="nav-btn" data-tab="checker"><span class="nav-icon">✅</span><span>Checker</span></button>
 </nav>
+</div>
+
+<div id="party-wizard-overlay" class="cookmode-overlay" style="display:none;">
+  <div class="cookmode-top">
+    <button type="button" id="wizard-close-btn" class="cookmode-close">✕</button>
+    <div id="wizard-title" class="cookmode-title"></div>
+    <div id="wizard-progress" class="cookmode-progress"></div>
+  </div>
+  <div id="wizard-body" class="wizard-body"></div>
+  <div class="cookmode-nav">
+    <button type="button" id="wizard-back-btn" class="secondary-btn">‹ Back</button>
+    <button type="button" id="wizard-next-btn" class="primary-btn">Next ›</button>
+  </div>
 </div>
 
 <div id="cookmode-overlay" class="cookmode-overlay" style="display:none;">

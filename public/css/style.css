@@ -297,19 +297,19 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
   display:flex; align-items:center; justify-content:space-between; font-weight:800;
   font-size:1rem; margin-bottom:10px;
 }
-.planner-options-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:8px;}
+.planner-options-grid{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px;}
 .planner-option-card{
-  background:var(--card); border:2px solid var(--border); border-radius:12px; padding:8px;
-  text-align:center; font-size:0.78rem; cursor:default;
+  background:var(--card); border:2px solid var(--border); border-radius:12px; padding:10px;
+  text-align:center; font-size:0.82rem; cursor:default;
 }
 .planner-option-card.chosen{border-color:var(--accent); background:var(--accent-bg);}
-.planner-option-thumb{width:100%; height:64px; object-fit:cover; border-radius:8px; margin-bottom:6px; background:var(--border);}
+.planner-option-thumb{width:100%; height:90px; object-fit:cover; border-radius:8px; margin-bottom:8px; background:var(--border);}
 .planner-option-title{
-  font-weight:700; font-size:0.78rem; line-height:1.2; margin-bottom:4px; min-height:2.3em;
+  font-weight:700; font-size:0.85rem; line-height:1.25; margin-bottom:6px; min-height:2.3em;
   overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
 }
-.planner-option-badge{font-size:0.85rem; margin-bottom:6px;}
-.planner-choose-btn{width:100%; margin:0; padding:6px 4px; font-size:0.75rem;}
+.planner-option-badge{font-size:0.95rem; margin-bottom:8px;}
+.planner-choose-btn{width:100%; margin:0; padding:8px 4px; font-size:0.8rem;}
 .note-course-input{
   width:100%; border:1px solid var(--border); border-radius:10px; padding:10px; background:var(--card);
   color:var(--text); font-family:inherit; font-size:0.9rem;
@@ -345,6 +345,15 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 .cookmode-timer{font-size:2.8rem; font-weight:800; color:var(--accent);}
 .cookmode-nav{display:flex; gap:10px;}
 .cookmode-nav button{flex:1; margin:0;}
+
+.wizard-body{
+  flex:1; overflow-y:auto; padding:16px 4px; text-align:left; display:flex; flex-direction:column;
+}
+.wizard-body input, .wizard-body textarea{
+  border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--card);
+  color:var(--text); font-family:inherit; font-size:0.9rem; width:100%;
+}
+.wizard-body textarea{width:100%;}
 
 /* ---- Bottom nav ---- */
 .bottom-nav{
