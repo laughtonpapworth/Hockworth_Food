@@ -1,4 +1,4 @@
-const CACHE_NAME = 'meal-plan-v9';
+const CACHE_NAME = 'meal-plan-v10';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const APP_SHELL = [
   '/js/checker.js',
   '/js/discover.js',
   '/js/calendar.js',
+  '/js/profiles.js',
   '/data/recipes.json',
   '/data/ingredient-rules.json',
   '/manifest.json'

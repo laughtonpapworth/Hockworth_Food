@@ -1,49 +1,27 @@
 {
-  "profiles": {
-    "his": {
-      "label": "Him",
-      "allergens": {
-        "description": "Wheat allergy - hard no if present",
-        "terms": [
-          "wheat", "wheat flour", "wheatgerm", "wheat starch", "durum",
-          "semolina", "spelt", "farro", "bulgur", "couscous",
-          "barley", "rye", "malt", "malt extract", "malt vinegar",
-          "brewer's yeast", "gluten"
-        ]
-      },
-      "caution": {
-        "description": "Common IBS / high-FODMAP triggers - moderate rather than avoid entirely",
-        "terms": [
-          "onion", "onion powder", "garlic", "garlic powder",
-          "inulin", "chicory root", "honey", "high fructose corn syrup",
-          "high-fructose corn syrup", "fructose", "sorbitol", "mannitol",
-          "xylitol", "isomalt", "agave", "soya bean", "soybean"
-        ]
-      }
-    },
-    "hers": {
-      "label": "Her",
-      "allergens": {
-        "description": "Dairy and soy free for baby's suspected CMPA - hard no if present",
-        "terms": [
-          "milk", "milk powder", "skimmed milk", "whole milk", "buttermilk",
-          "butter", "ghee", "cream", "double cream", "single cream",
-          "cheese", "whey", "whey protein", "casein", "caseinate",
-          "lactose", "yoghurt", "yogurt", "custard",
-          "soya", "soy", "soybean", "soya bean", "soy protein",
-          "soy lecithin", "soya lecithin", "hydrolysed soy protein",
-          "hydrolyzed soy protein", "tofu", "tempeh", "edamame", "miso"
-        ]
-      },
-      "caution": {
-        "description": "Not a formal restriction, but flagged for awareness",
-        "terms": []
-      }
-    }
+  "allergenGroups": {
+    "dairy": { "label": "Dairy", "terms": ["milk","milk powder","skimmed milk","whole milk","buttermilk","butter","ghee","cream","double cream","single cream","cheese","whey","whey protein","casein","caseinate","lactose","yoghurt","yogurt","custard"] },
+    "soy": { "label": "Soy", "terms": ["soya","soy","soybean","soya bean","soy protein","soy lecithin","soya lecithin","hydrolysed soy protein","hydrolyzed soy protein","tofu","tempeh","edamame","miso"] },
+    "wheat": { "label": "Wheat / Gluten", "terms": ["wheat","wheat flour","wheatgerm","wheat starch","durum","semolina","spelt","farro","bulgur","couscous","barley","rye","malt","malt extract","malt vinegar","brewer's yeast","gluten"] },
+    "nuts": { "label": "Tree nuts", "terms": ["almond","walnut","cashew","pistachio","hazelnut","pecan","macadamia","brazil nut","pine nut"] },
+    "peanuts": { "label": "Peanuts", "terms": ["peanut","groundnut","peanut oil","peanut butter"] },
+    "egg": { "label": "Egg", "terms": ["egg","eggs","egg white","egg yolk","albumin","mayonnaise"] },
+    "shellfish": { "label": "Shellfish", "terms": ["prawn","prawns","shrimp","crab","lobster","shellfish","crayfish","langoustine"] },
+    "fish": { "label": "Fish", "terms": ["fish","salmon","tuna","anchovy","cod","haddock","mackerel","sardine"] },
+    "sesame": { "label": "Sesame", "terms": ["sesame","tahini","sesame oil","sesame seed"] }
   },
+  "dietGroups": {
+    "meatTerms": ["beef","chicken","turkey","pork","lamb","bacon","ham","sausage","mince","duck","venison","goose","gelatine","gelatin","chorizo","pepperoni","veal"],
+    "fishTerms": ["fish","salmon","tuna","anchovy","cod","haddock","mackerel","sardine","prawn","prawns","shrimp","crab","lobster","shellfish","crayfish"],
+    "dairyTerms": ["milk","butter","ghee","cream","cheese","whey","casein","lactose","yoghurt","yogurt"],
+    "eggTerms": ["egg","eggs","egg white","egg yolk","mayonnaise"],
+    "honeyTerms": ["honey"]
+  },
+  "fodmapTerms": ["onion","onion powder","garlic","garlic powder","inulin","chicory root","honey","high fructose corn syrup","high-fructose corn syrup","fructose","sorbitol","mannitol","xylitol","isomalt","agave","wheat","rye","barley","apple","pear","watermelon","cashew","pistachio","lentil","chickpea","kidney bean","baked bean"],
   "notes": [
     "This is a simple text-match checker, not a medical device. Always read the actual label if there is any doubt.",
-    "Soy lecithin and 'may contain traces of milk/soya' warnings are treated as allergen hits here - use the manual override if you've separately confirmed a product is safe.",
-    "FODMAP triggers are shown as a caution, not a block, since tolerance is dose-dependent and personal."
+    "'May contain traces of...' warnings are treated as allergen hits here - use your own judgement if you've separately confirmed a product is safe.",
+    "FODMAP triggers are shown as a caution rather than a block, since tolerance is dose-dependent and personal.",
+    "Diet-type exclusions (vegan/vegetarian) work the same way as allergies for scoring purposes, but are driven by each profile's chosen diet type rather than a manual checkbox."
   ]
 }

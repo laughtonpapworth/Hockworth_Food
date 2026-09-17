@@ -25,11 +25,24 @@
 <header class="app-header">
   <div class="header-top">
     <h1>🍽️ Our Meal Plan</h1>
-    <button id="signout-btn" class="signout-btn" title="Sign out"></button>
+    <div class="header-actions">
+      <button type="button" id="settings-btn" class="settings-btn" title="Profiles">⚙️</button>
+      <button id="signout-btn" class="signout-btn" title="Sign out"></button>
+    </div>
   </div>
 </header>
 
 <main>
+  <section id="profiles" class="tab-panel">
+    <div class="profiles-header">
+      <button type="button" id="profiles-back-btn" class="cal-nav-btn">‹</button>
+      <div class="section-title" style="margin:0;">Profiles</div>
+    </div>
+    <div class="note">Set up everyone eating, their diet type, any allergies or intolerances, and food likes/dislikes. Discover and the Checker use this to work out what's right for each person.</div>
+    <div id="profiles-list"></div>
+    <button type="button" id="add-profile-btn" class="primary-btn" style="margin-top:14px;">+ Add a person</button>
+  </section>
+
   <section id="recipes" class="tab-panel active">
     <div class="section-title">This week's plan</div>
     <div class="filter-row">
@@ -118,6 +131,7 @@
 <script src="js/checker.js"></script>
 <script src="js/discover.js"></script>
 <script src="js/calendar.js"></script>
+<script src="js/profiles.js"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

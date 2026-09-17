@@ -5,23 +5,68 @@ window.rulesReady = fetch('data/ingredient-rules.json')
   .then(data => { RULES = data; window.RULES = data; return data; })
   .catch(err => { console.error('Could not load ingredient-rules.json', err); throw err; });
 
-// ---- Core matching logic ----
-function checkIngredients(text) {
+// ---- Core matching logic, run once per profile ----
+// A profile looks like: { id, name, diet: 'vegan'|'vegetarian'|'meat',
+//   allergies: ['dairy','wheat',...], ibs: true/false, dislikes: [...], likes: [...] }
+function checkForProfile(text, profile) {
   const lower = text.toLowerCase();
-  const result = {};
+  const hits = { allergy: [], diet: [], ibs: [], dislike: [] };
+  let likeHit = false;
 
-  Object.entries(RULES.profiles).forEach(([key, profile]) => {
-    const allergenHits = profile.allergens.terms.filter(term => lower.includes(term.toLowerCase()));
-    const cautionHits = (profile.caution.terms || []).filter(term => lower.includes(term.toLowerCase()));
-
-    let status = 'ok';
-    if (allergenHits.length > 0) status = 'bad';
-    else if (cautionHits.length > 0) status = 'warn';
-
-    result[key] = { label: profile.label, status, allergenHits, cautionHits };
+  (profile.allergies || []).forEach(key => {
+    const group = RULES.allergenGroups[key];
+    if (!group) return;
+    const matches = group.terms.filter(t => lower.includes(t.toLowerCase()));
+    if (matches.length) hits.allergy.push({ group: group.label, matches });
   });
 
+  if (profile.diet === 'vegan' || profile.diet === 'vegetarian') {
+    ['meatTerms', 'fishTerms'].forEach(key => {
+      const matches = RULES.dietGroups[key].filter(t => lower.includes(t.toLowerCase()));
+      if (matches.length) hits.diet.push({ group: key === 'meatTerms' ? 'Meat' : 'Fish/seafood', matches });
+    });
+  }
+  if (profile.diet === 'vegan') {
+    ['dairyTerms', 'eggTerms', 'honeyTerms'].forEach(key => {
+      const matches = RULES.dietGroups[key].filter(t => lower.includes(t.toLowerCase()));
+      if (matches.length) hits.diet.push({ group: key === 'dairyTerms' ? 'Dairy' : key === 'eggTerms' ? 'Egg' : 'Honey', matches });
+    });
+  }
+
+  if (profile.ibs) {
+    const matches = RULES.fodmapTerms.filter(t => lower.includes(t.toLowerCase()));
+    if (matches.length) hits.ibs = matches;
+  }
+
+  (profile.dislikes || []).forEach(word => {
+    if (word && lower.includes(word.toLowerCase())) hits.dislike.push(word);
+  });
+  (profile.likes || []).forEach(word => {
+    if (word && lower.includes(word.toLowerCase())) likeHit = true;
+  });
+
+  let status = 'ok';
+  if (hits.allergy.length || hits.diet.length || hits.dislike.length) status = 'avoid';
+  else if (hits.ibs.length) status = 'caution';
+
+  return { name: profile.name, status, hits, likeHit };
+}
+
+// Checks a block of ingredient text against every given profile.
+// Returns { [profileId]: { name, status, hits, likeHit } }
+function checkIngredientsForProfiles(text, profiles) {
+  const result = {};
+  (profiles || []).forEach(p => {
+    result[p.id] = checkForProfile(text, p);
+  });
   return result;
+}
+
+function verdictIcon(status) {
+  return status === 'ok' ? '✅' : status === 'caution' ? '⚠️' : '❌';
+}
+function verdictClass(status) {
+  return status === 'ok' ? 'verdict-ok' : status === 'caution' ? 'verdict-warn' : 'verdict-bad';
 }
 
 function renderVerdict(result, productName) {
@@ -29,28 +74,34 @@ function renderVerdict(result, productName) {
   box.style.display = 'block';
 
   const rows = Object.values(result).map(r => {
-    const icon = r.status === 'ok' ? '✅' : r.status === 'warn' ? '⚠️' : '❌';
-    const cls = r.status === 'ok' ? 'verdict-ok' : r.status === 'warn' ? 'verdict-warn' : 'verdict-bad';
-    let hits = '';
-    if (r.allergenHits.length) hits += `<div class="hit-list">Contains: ${r.allergenHits.join(', ')}</div>`;
-    if (r.cautionHits.length) hits += `<div class="hit-list">FODMAP trigger: ${r.cautionHits.join(', ')} — check your tolerance</div>`;
-    return `<div class="verdict-row ${cls}"><span class="verdict-icon">${icon}</span><div><strong>${r.label}</strong>${hits}</div></div>`;
+    let hitLines = '';
+    r.hits.allergy.forEach(h => hitLines += `<div class="hit-list">Contains ${h.group}: ${h.matches.join(', ')}</div>`);
+    r.hits.diet.forEach(h => hitLines += `<div class="hit-list">Contains ${h.group.toLowerCase()}: ${h.matches.join(', ')}</div>`);
+    if (r.hits.ibs.length) hitLines += `<div class="hit-list">FODMAP trigger: ${r.hits.ibs.join(', ')} — check tolerance</div>`;
+    if (r.hits.dislike.length) hitLines += `<div class="hit-list">Contains a dislike: ${r.hits.dislike.join(', ')}</div>`;
+    if (r.likeHit) hitLines += `<div class="hit-list">⭐ Contains something they like</div>`;
+    return `<div class="verdict-row ${verdictClass(r.status)}"><span class="verdict-icon">${verdictIcon(r.status)}</span><div><strong>${r.name}</strong>${hitLines}</div></div>`;
   }).join('');
 
-  const bothOk = Object.values(result).every(r => r.status !== 'bad');
-  const banner = bothOk
-    ? '<div class="verdict-row verdict-ok"><span class="verdict-icon">✅</span><strong>No confirmed allergens for either of you</strong></div>'
-    : '<div class="verdict-row verdict-bad"><span class="verdict-icon">❌</span><strong>Not safe for at least one of you</strong></div>';
+  const allOk = Object.values(result).every(r => r.status !== 'avoid');
+  const banner = allOk
+    ? '<div class="verdict-row verdict-ok"><span class="verdict-icon">✅</span><strong>Nothing flagged for anyone</strong></div>'
+    : '<div class="verdict-row verdict-bad"><span class="verdict-icon">❌</span><strong>Not right for at least one person</strong></div>';
 
   box.innerHTML = (productName ? `<h4>${productName}</h4>` : '') + banner + rows +
-    '<div class="hit-list" style="margin-top:8px;">Simple text match only — always check the actual label if unsure, and watch for "may contain" warnings separately.</div>';
+    '<div class="hit-list" style="margin-top:8px;">Simple text match only — always check the actual label if unsure.</div>';
 }
 
 // ---- Manual check ----
 document.getElementById('check-manual').addEventListener('click', () => {
   const text = document.getElementById('manual-input').value.trim();
   if (!text || !RULES) return;
-  renderVerdict(checkIngredients(text), null);
+  const profiles = typeof getProfiles === 'function' ? getProfiles() : [];
+  if (!profiles.length) {
+    alert('Set up at least one profile first (the ⚙️ icon in the header).');
+    return;
+  }
+  renderVerdict(checkIngredientsForProfiles(text, profiles), null);
 });
 
 // ---- Barcode scanning ----
@@ -60,10 +111,7 @@ const readerDiv = document.getElementById('reader');
 const statusDiv = document.getElementById('scan-status');
 
 scanBtn.addEventListener('click', () => {
-  if (scanner) {
-    stopScanner();
-    return;
-  }
+  if (scanner) { stopScanner(); return; }
   readerDiv.style.display = 'block';
   scanBtn.textContent = '✖ Stop scanning';
   statusDiv.textContent = 'Point the camera at a barcode...';
@@ -73,7 +121,7 @@ scanBtn.addEventListener('click', () => {
     { facingMode: 'environment' },
     { fps: 10, qrbox: 220 },
     onScanSuccess,
-    () => {} // ignore per-frame scan failures
+    () => {}
   ).catch(err => {
     statusDiv.textContent = 'Camera access failed: ' + err;
     stopScanner();
@@ -81,9 +129,7 @@ scanBtn.addEventListener('click', () => {
 });
 
 function stopScanner() {
-  if (scanner) {
-    scanner.stop().then(() => scanner.clear()).catch(() => {});
-  }
+  if (scanner) scanner.stop().then(() => scanner.clear()).catch(() => {});
   scanner = null;
   readerDiv.style.display = 'none';
   scanBtn.textContent = '📷 Scan a barcode';
@@ -110,7 +156,8 @@ function lookupBarcode(barcode) {
       }
       statusDiv.textContent = '';
       document.getElementById('manual-input').value = ingredients;
-      renderVerdict(checkIngredients(ingredients), data.product.product_name || barcode);
+      const profiles = typeof getProfiles === 'function' ? getProfiles() : [];
+      renderVerdict(checkIngredientsForProfiles(ingredients, profiles), data.product.product_name || barcode);
     })
     .catch(err => {
       statusDiv.textContent = 'Lookup failed — check your connection and try again, or enter ingredients manually.';

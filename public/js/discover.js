@@ -14,7 +14,7 @@ function setDiscoverStatus(text) {
 fetch(`${MEALDB_BASE}/categories.php`)
   .then(r => r.json())
   .then(data => {
-    const categories = (data.categories || []).filter(c => c.strCategory !== 'Beef');
+    const categories = data.categories || [];
     const chipRow = document.getElementById('category-chips');
     chipRow.innerHTML = categories.map(c =>
       `<button class="filter-btn category-chip" data-category="${c.strCategory}">${c.strCategory}</button>`
@@ -128,18 +128,17 @@ async function renderDiscoverResults(meals) {
     const ingredientsList = extractIngredientsList(meal);
     const ingredientsText = ingredientsList.join(', ');
     let badges = '';
-    if (typeof checkIngredients === 'function' && window.RULES) {
+    const profiles = typeof getProfiles === 'function' ? getProfiles() : [];
+    if (typeof checkIngredientsForProfiles === 'function' && window.RULES && profiles.length) {
       try {
-        const verdict = checkIngredients(ingredientsText);
+        const verdict = checkIngredientsForProfiles(ingredientsText, profiles);
         badges = Object.values(verdict).map(r => {
-          const icon = r.status === 'ok' ? '✅' : r.status === 'warn' ? '⚠️' : '❌';
-          const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'warn' ? 'badge-warn' : 'badge-bad';
-          return `<span class="badge ${cls}">${icon} ${r.label}</span>`;
+          const icon = r.status === 'ok' ? '✅' : r.status === 'caution' ? '⚠️' : '❌';
+          const cls = r.status === 'ok' ? 'badge-ok' : r.status === 'caution' ? 'badge-warn' : 'badge-bad';
+          const star = r.likeHit ? ' ⭐' : '';
+          return `<span class="badge ${cls}">${icon} ${r.name}${star}</span>`;
         }).join('');
       } catch (e) { console.error(e); }
-    }
-    if (/\bbeef\b/i.test(ingredientsText)) {
-      badges += `<span class="badge badge-note">🥩 Contains beef</span>`;
     }
 
     const card = document.createElement('div');
