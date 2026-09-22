@@ -28,6 +28,13 @@ function mealAppLoadAllData() {
   if (typeof refreshAll === 'function') refreshAll();
 }
 
+// Shows the current household's invite code on the Profiles panel, so
+// there's always a way to find it again after the one-time setup screen.
+function mealAppShowHouseholdCode() {
+  const el = document.getElementById('household-panel-code');
+  if (el && window.mealAppHouseholdId) el.textContent = window.mealAppHouseholdId;
+}
+
 window.addEventListener('meal-app-auth', (e) => {
   const { state, user } = e.detail;
   if (state === 'signed-out') {
@@ -40,6 +47,7 @@ window.addEventListener('meal-app-auth', (e) => {
     const badge = document.getElementById('signout-btn');
     if (badge && user) badge.textContent = 'Sign out (' + (user.displayName || user.email) + ')';
     mealAppShowScreen('app-content');
+    mealAppShowHouseholdCode();
     mealAppLoadAllData();
   }
 });
@@ -119,8 +127,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const user = window.mealAppAuth.currentUser;
     if (badge && user) badge.textContent = 'Sign out (' + (user.displayName || user.email) + ')';
     mealAppShowScreen('app-content');
+    mealAppShowHouseholdCode();
     mealAppLoadAllData();
   }
+
+  // --- Household code panel (inside Profiles) ---
+  const copyBtn = document.getElementById('household-copy-btn');
+  if (copyBtn) copyBtn.addEventListener('click', () => {
+    const code = document.getElementById('household-panel-code').textContent;
+    if (!code || code === '------') return;
+    const done = () => { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(done).catch(() => prompt('Your household code:', code));
+    } else {
+      prompt('Your household code:', code);
+    }
+  });
 
   document.getElementById('household-continue-btn').addEventListener('click', enterApp);
 

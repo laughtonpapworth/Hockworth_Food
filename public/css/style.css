@@ -235,6 +235,14 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 
 /* ---- Profiles page ---- */
 .profiles-header{display:flex; align-items:center; gap:10px; margin-bottom:12px;}
+.household-panel{
+  background:var(--accent-bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px; margin-bottom:16px;
+}
+.household-panel-label{font-size:0.8rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;}
+.household-panel-row{display:flex; align-items:center; gap:10px;}
+.household-panel-code{font-size:1.3rem; font-weight:800; letter-spacing:3px; color:var(--accent-dark);}
+.household-copy-btn{width:auto; margin:0; padding:8px 16px; flex-shrink:0;}
 .profile-card{
   background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
   padding:16px 18px; margin-bottom:14px; box-shadow:var(--shadow);
