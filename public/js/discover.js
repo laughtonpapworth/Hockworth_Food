@@ -2,6 +2,87 @@ const MEALDB_BASE = 'https://www.themealdb.com/api/json/v1/1';
 
 let selectedProfileIds = [];
 
+// ---- Import a recipe from a link (BBC Good Food, or most other recipe sites) ----
+function wireRecipeImporter() {
+  const bbcSearchBtn = document.getElementById('bbc-search-btn');
+  const bbcSearchInput = document.getElementById('bbc-search-input');
+  if (bbcSearchBtn) bbcSearchBtn.addEventListener('click', () => {
+    const q = bbcSearchInput.value.trim();
+    const url = q
+      ? 'https://www.bbcgoodfood.com/search?q=' + encodeURIComponent(q)
+      : 'https://www.bbcgoodfood.com/search';
+    window.open(url, '_blank', 'noopener');
+  });
+
+  const importBtn = document.getElementById('import-url-btn');
+  const importInput = document.getElementById('import-url-input');
+  const importStatus = document.getElementById('import-status');
+  const importReview = document.getElementById('import-review');
+
+  if (!importBtn) return;
+  importBtn.addEventListener('click', async () => {
+    const url = importInput.value.trim();
+    if (!url) return;
+    if (typeof window.mealAppImportRecipe !== 'function') {
+      importStatus.textContent = 'Sign in first.';
+      return;
+    }
+    importBtn.disabled = true;
+    importStatus.textContent = 'Fetching the recipe…';
+    importReview.style.display = 'none';
+    try {
+      const data = await window.mealAppImportRecipe(url);
+      renderImportReview(data);
+      importStatus.textContent = '';
+    } catch (err) {
+      console.error('Import failed', err);
+      importStatus.textContent = (err && err.message) || "Couldn't import that recipe — try a different link, or add it manually below.";
+    } finally {
+      importBtn.disabled = false;
+    }
+  });
+}
+
+function renderImportReview(data) {
+  const importReview = document.getElementById('import-review');
+  importReview.style.display = '';
+  importReview.innerHTML = `
+    <div class="import-review-card">
+      <label>Title</label>
+      <input type="text" id="import-review-title" value="${(data.title || '').replace(/"/g, '&quot;')}">
+      <label>Ingredients (one per line)</label>
+      <textarea id="import-review-ingredients">${(data.ingredients || []).join('\n')}</textarea>
+      <label>Method</label>
+      <textarea id="import-review-instructions">${data.instructions || ''}</textarea>
+      <div class="import-review-actions">
+        <button type="button" id="import-add-plan-btn" class="primary-btn">Add to Plan</button>
+        <button type="button" id="import-add-saved-btn" class="secondary-btn">Add to Saved</button>
+      </div>
+    </div>
+  `;
+
+  function buildMealAndSave(targetStatus) {
+    const title = document.getElementById('import-review-title').value.trim() || 'Imported recipe';
+    const ingredientsList = document.getElementById('import-review-ingredients').value
+      .split('\n').map(s => s.trim()).filter(Boolean);
+    const instructions = document.getElementById('import-review-instructions').value.trim();
+    const meal = {
+      idMeal: 'imported-' + Date.now(),
+      strMeal: title,
+      strMealThumb: data.image || '',
+      strInstructions: instructions
+    };
+    saveDiscoveredRecipe(meal, ingredientsList, targetStatus);
+    importReview.style.display = 'none';
+    document.getElementById('import-url-input').value = '';
+  }
+
+  document.getElementById('import-add-plan-btn').addEventListener('click', () => buildMealAndSave('plan'));
+  document.getElementById('import-add-saved-btn').addEventListener('click', () => buildMealAndSave('saved'));
+}
+
+document.addEventListener('DOMContentLoaded', wireRecipeImporter);
+
 // ---- Profile selector (who am I finding food for?) ----
 function renderDiscoverProfileSelector() {
   const el = document.getElementById('discover-profile-select');

@@ -183,6 +183,37 @@ same shared data you've always had.
 
 ---
 
+## Importing recipes from a link (BBC Good Food, etc.)
+
+Discover has an "Import from a recipe link" box. Paste in a recipe page URL and it pulls out the
+title, ingredients and method automatically — this works for BBC Good Food and most other recipe
+sites, because they publish that data in a standard format for Google's own recipe search results.
+There's also a shortcut to open BBC Good Food's own search in a new tab, so you can find a recipe
+there and paste its link back in.
+
+This needs a small piece of server-side code (in `functions/`), because a browser can't fetch
+another website's page directly. One-off setup:
+
+1. **Upgrade to the Blaze plan** — Firebase console → click your project name/settings icon (bottom
+   left) → **Upgrade** → choose **Blaze (pay as you go)**. You'll need a card on file, but normal
+   household use stays well within the free monthly allowance (2 million function calls), so
+   realistic cost is £0. Optional: set a budget alert in the same screen for peace of mind.
+2. From your computer's terminal, inside the `meal-app` folder:
+   ```bash
+   cd functions
+   npm install
+   cd ..
+   firebase deploy --only functions
+   ```
+   This is a one-off (or re-run only if `functions/index.js` changes) — it's not covered by the
+   GitHub Actions workflow, which only deploys Hosting.
+
+If a link doesn't import cleanly (some sites don't publish this data, or you've pasted a search/
+category page instead of an actual recipe page), the app will tell you and you can fall back to
+the manual "Type my own" or "Scan a photo" options instead.
+
+---
+
 ## Editing the plan later
 
 - **Change a recipe or add a new one:** edit `data/recipes.json`. No code changes needed —

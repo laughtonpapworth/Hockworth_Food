@@ -122,6 +122,18 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 
 .note{background:var(--note-bg); color:var(--note-text); border-radius:12px; padding:13px 15px; font-size:0.87rem; margin-bottom:14px;}
 .status-line{color:var(--muted); font-size:0.85rem; margin:10px 0;}
+.import-panel{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px 16px; margin-bottom:16px; box-shadow:var(--shadow);}
+.import-panel-label{font-size:0.8rem; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;}
+.import-review-card{background:var(--accent-bg); border-radius:12px; padding:14px; margin-top:10px;}
+.import-review-card label{display:block; font-size:0.78rem; color:var(--muted); font-weight:600; margin:10px 0 4px;}
+.import-review-card label:first-child{margin-top:0;}
+.import-review-card input[type="text"], .import-review-card textarea{
+  width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 12px;
+  background:var(--card); color:var(--text); font-family:inherit; font-size:0.9rem; box-sizing:border-box;
+}
+.import-review-card textarea{min-height:100px; resize:vertical;}
+.import-review-actions{display:flex; gap:8px; margin-top:12px;}
+.import-review-actions button{margin:0;}
 
 /* ---- Buttons ---- */
 .primary-btn, .secondary-btn{

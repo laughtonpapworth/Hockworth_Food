@@ -13,7 +13,14 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const realDb = firebase.firestore();
+const functionsClient = firebase.functions();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// Calls the server-side recipe importer (see functions/index.js). Needed
+// because a browser can't fetch another website's page content directly.
+window.mealAppImportRecipe = function (url) {
+  return functionsClient.httpsCallable('importRecipe')({ url }).then(res => res.data);
+};
 
 window.mealAppAuth = auth;
 window.mealAppDb = null; // set once a household is resolved, see below

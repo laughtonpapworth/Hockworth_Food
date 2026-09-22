@@ -104,6 +104,20 @@
 
     <div id="discover-profile-select" class="profile-select-row"></div>
 
+    <div class="import-panel">
+      <div class="import-panel-label">Import from a recipe link</div>
+      <div class="search-row">
+        <input type="text" id="import-url-input" placeholder="Paste a BBC Good Food (or other) recipe link">
+        <button id="import-url-btn" class="primary-btn">Import</button>
+      </div>
+      <div class="search-row" style="margin-top:8px;">
+        <input type="text" id="bbc-search-input" placeholder="Or search BBC Good Food for...">
+        <button id="bbc-search-btn" class="secondary-btn" style="margin:0; width:auto; white-space:nowrap;">Open search ↗</button>
+      </div>
+      <div id="import-status" class="status-line"></div>
+      <div id="import-review" style="display:none;"></div>
+    </div>
+
     <div class="search-row">
       <input type="text" id="discover-ingredient-input" placeholder="Search an ingredient — chicken, lentils, sweet potato...">
       <button id="discover-search-btn" class="primary-btn">Search</button>
@@ -228,6 +242,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-functions-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/household.js"></script>
 <script src="js/app.js"></script>
