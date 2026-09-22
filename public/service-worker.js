@@ -1,4 +1,4 @@
-const CACHE_NAME = 'meal-plan-v19';
+const CACHE_NAME = 'meal-plan-v20';
 const APP_SHELL = [
   '/',
   '/index.html',
