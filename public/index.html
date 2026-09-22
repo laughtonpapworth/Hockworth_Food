@@ -16,9 +16,37 @@
 <div id="signin-screen" class="signin-screen">
   <div class="signin-emoji">🍽️</div>
   <h2>Our Meal Plan</h2>
-  <p class="muted">Sign in with Google to load your synced shopping list and recipes.</p>
+  <p class="muted">Sign in to load your household's synced shopping list and recipes.</p>
   <button id="google-signin-btn" class="primary-btn">Sign in with Google</button>
+  <div class="auth-divider"><span>or</span></div>
+  <form id="email-auth-form" class="auth-form">
+    <input id="auth-email" type="email" placeholder="Email" required autocomplete="email">
+    <input id="auth-password" type="password" placeholder="Password" required autocomplete="current-password" minlength="6">
+    <button id="email-auth-submit" type="submit" class="secondary-btn">Sign in</button>
+  </form>
+  <p class="muted auth-switch"><span id="auth-mode-label">Don't have an account?</span> <a href="#" id="auth-mode-toggle">Create one</a></p>
+  <p class="muted auth-switch"><a href="#" id="auth-forgot-link">Forgot password?</a></p>
   <p id="signin-error" class="signin-error" style="display:none;"></p>
+</div>
+
+<div id="household-screen" class="signin-screen" style="display:none;">
+  <div id="household-choice">
+    <div class="signin-emoji">🏠</div>
+    <h2>One more step</h2>
+    <p class="muted">Create a new household, or join one you've been invited to.</p>
+    <button id="create-household-btn" class="primary-btn">Create a new household</button>
+    <div class="auth-divider"><span>or</span></div>
+    <input id="join-household-input" type="text" placeholder="Enter invite code" maxlength="6" class="household-code-input">
+    <button id="join-household-btn" class="secondary-btn">Join with code</button>
+    <p id="household-error" class="signin-error" style="display:none;"></p>
+  </div>
+  <div id="household-created" style="display:none;">
+    <div class="signin-emoji">✅</div>
+    <h2>Household created</h2>
+    <p class="muted">Share this code with your partner — they sign up on this same site and enter it to join you:</p>
+    <div class="household-code" id="household-code-display"></div>
+    <button id="household-continue-btn" class="primary-btn">Continue</button>
+  </div>
 </div>
 
 <div id="app-content" style="display:none;">
@@ -192,6 +220,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
+<script src="js/household.js"></script>
 <script src="js/app.js"></script>
 <script src="js/checker.js"></script>
 <script src="js/discover.js"></script>

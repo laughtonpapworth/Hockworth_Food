@@ -42,9 +42,10 @@ In the left sidebar: **Build → Firestore Database → Create database**.
 - Choose **Start in production mode** (the rules file in this repo controls access properly).
 - Pick a location close to you — `europe-west2` (London) is the sensible choice for the UK.
 
-### 3. Enable Google Sign-In
-Left sidebar: **Build → Authentication → Get started → Sign-in method → Google → Enable**.
-It'll ask for a support email — use either of yours. **Save**.
+### 3. Enable sign-in methods
+Left sidebar: **Build → Authentication → Get started → Sign-in method**, then enable both:
+- **Google** — it'll ask for a support email, use either of yours. **Save**.
+- **Email/Password** — just toggle it on. **Save**.
 
 Firebase automatically authorises `localhost` and your `*.web.app` Hosting domain for sign-in,
 so no extra domain setup is needed unless you later add a custom domain.
@@ -101,18 +102,14 @@ settings → Service accounts → Generate new private key → download the JSON
 into a new GitHub repo secret named `FIREBASE_SERVICE_ACCOUNT` under
 Papworth_food → Settings → Secrets and variables → Actions.)*
 
-### 8. Restrict access to your two accounts, then deploy the rules
-Open `firestore.rules` and replace both placeholder emails with your actual Google account
-addresses (the ones you'll each sign in with):
-```
-'REPLACE_WITH_HIS_EMAIL@gmail.com',
-'REPLACE_WITH_HER_EMAIL@gmail.com'
-```
-Then deploy it — this is a one-off, not handled by the GitHub Action:
+### 8. Deploy the rules
+Access is controlled by household membership now (see "Logins and households" below), not a
+hardcoded email list, so `firestore.rules` needs no editing. Just deploy it — this is a one-off,
+not handled by the GitHub Action:
 ```bash
 firebase deploy --only firestore:rules
 ```
-Only needs re-running if you ever change `firestore.rules` (e.g. to add a third account later).
+Only needs re-running if you ever change `firestore.rules` itself.
 
 ### 9. Icons (optional, for the "add to home screen" prompt)
 Drop a 192×192 and a 512×512 PNG into `public/icons/`, named `icon-192.png` and `icon-512.png`.
@@ -137,6 +134,52 @@ holding), go to **Shopping List**, and tick something on one — it should appea
 other within a second or two. If sign-in itself fails, double check step 3. If sign-in works but
 ticks don't sync, it's almost always step 8 — the email in `firestore.rules` not matching exactly
 the Google account you signed in with.
+
+---
+
+## Logins and households
+
+Anyone can sign in with Google or an email/password of their own — there's no fixed pair of
+accounts baked into the app any more. After signing in for the first time, each person either:
+
+- **Creates a household** — gets a 6-character invite code (e.g. `PAPWORTH`) to share with
+  their partner, or
+- **Joins a household** — types in a code someone else shared with them.
+
+Everyone in a household sees the same shared data (plan, shopping list, calendar, profiles,
+pantry, events). A different household's data is completely separate and invisible to you —
+this is enforced by `firestore.rules`, not just by the app's UI.
+
+So testing this with your sisters is just: send them the site link. They sign up, create their
+own household, and share their code with their partner. Nothing to configure on your end, and
+their data never touches yours.
+
+### Moving your existing data into a household (one-off)
+
+Your current data lives under the old `household/...` path from before this change. To move it
+into your own household, sign in on the live site as normal, open your browser's dev console
+(F12 → Console tab), and paste this once:
+
+```js
+(async () => {
+  const db = firebase.firestore();
+  const code = 'PAPWORTH'; // pick your own 6-character code if you'd rather
+  const uid = firebase.auth().currentUser.uid;
+  const houseRef = db.collection('households').doc(code);
+
+  await houseRef.set({ code, members: [uid], createdAt: Date.now() });
+
+  const oldDocs = ['shopping-list','recipe-status','saved-recipes','pantry','calendar','events','event-shopping-checked','profiles'];
+  for (const name of oldDocs) {
+    const snap = await db.collection('household').doc(name).get();
+    if (snap.exists) await houseRef.collection('data').doc(name).set(snap.data());
+  }
+  console.log('Done. Your household code is', code);
+})();
+```
+
+Then give Laura that code — she signs in with her own login and joins with it, landing in the
+same shared data you've always had.
 
 ---
 
