@@ -18,16 +18,12 @@ function loadProfiles() {
   const ref = profilesDocRef();
   if (!ref) return;
   ref.onSnapshot(snap => {
-    if (snap.exists && Array.isArray(snap.data().list) && snap.data().list.length) {
+    if (snap.exists && Array.isArray(snap.data().list)) {
       PROFILES = snap.data().list;
     } else if (!snap.exists) {
-      // First-ever load: seed with two starter profiles matching what this
-      // household was already using, so nothing is lost by switching over
-      // to the new profile system.
-      PROFILES = [
-        { id: 'p_' + Date.now() + '_a', name: 'Laughton', diet: 'meat', allergies: ['wheat'], ibs: true, customAllergies: ['beef'], dislikes: [], likes: [] },
-        { id: 'p_' + Date.now() + '_b', name: 'Laura', diet: 'vegetarian', allergies: ['dairy', 'soy'], ibs: false, customAllergies: [], dislikes: ['mushroom', 'courgette', 'aubergine', 'tofu'], likes: [] }
-      ];
+      // Brand new household: start with no profiles. Each household adds
+      // its own people via "+ Add a person" — nothing pre-filled.
+      PROFILES = [];
       saveProfiles();
     }
     renderProfiles();
