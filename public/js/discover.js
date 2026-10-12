@@ -141,8 +141,8 @@ function getSelectedDiscoverProfiles() {
 function filterSafeForSelected(entries) {
   const profiles = getSelectedDiscoverProfiles();
   if (!profiles.length || !window.RULES) return entries;
-  return entries.filter(({ ingredientsText }) => {
-    const verdict = checkIngredientsForProfiles(ingredientsText, profiles);
+  return entries.filter(({ ingredientsText, checkText }) => {
+    const verdict = checkIngredientsForProfiles(checkText || ingredientsText, profiles);
     return Object.values(verdict).every(v => v.status !== 'avoid');
   });
 }
@@ -275,9 +275,21 @@ async function getCategoryMealList(category) {
 // and cuisine choice. A protein narrows Main to just that one category.
 // A cuisine intersects with whichever categories are in play, since
 // TheMealDB can't filter by category AND area in a single request.
-async function getBrowseCandidatePool(course, protein, cuisine) {
+//
+// Also excludes meat/fish categories at the source whenever a selected
+// profile is vegan/vegetarian — the same safety net the dinner-party
+// wizard already uses (see courseCategoryPool() below). This matters
+// because the per-dish ingredient-text check alone isn't enough: a beef
+// dish's ingredient list often names a cut ("sirloin", "brisket", "shin")
+// rather than the word "beef", so it can slip past a text match even
+// though its category says Beef.
+async function getBrowseCandidatePool(course, protein, cuisine, profiles) {
   let categories = COURSE_CATEGORY_MAP[course] || [];
   if (course === 'main' && protein) categories = [protein];
+
+  const anyVeg = (profiles || []).some(p => p.diet === 'vegan' || p.diet === 'vegetarian');
+  if (anyVeg) categories = categories.filter(c => !MEAT_FISH_CATEGORIES.includes(c));
+  if (!categories.length) return [];
 
   if (cuisine) {
     const lists = await Promise.all(categories.map(getCategoryMealList));
@@ -305,12 +317,12 @@ async function fetchBrowseBatch(isLoadMore) {
   }
   setDiscoverStatus(isLoadMore ? 'Finding more ideas...' : 'Finding some meal ideas...', 'discover-status');
 
-  const pool = await getBrowseCandidatePool(course, protein, cuisine);
+  const pool = await getBrowseCandidatePool(course, protein, cuisine, getSelectedDiscoverProfiles());
   const unseen = pool.filter(m => !discoverShownIds.has(m.idMeal));
   const candidates = shuffleArray(unseen).slice(0, 10);
 
   if (!candidates.length) {
-    setDiscoverStatus("Nothing new for this combination — try a different protein or cuisine, or come back later.", 'discover-status');
+    setDiscoverStatus("Nothing safe for this combination — try a different course, protein or cuisine.", 'discover-status');
     if (loadMoreBtn && !isLoadMore) loadMoreBtn.style.display = 'none';
     return;
   }
@@ -345,11 +357,21 @@ async function fetchAndRender(stubs, contextLabel, alreadyFull, append, opts) {
   const full = alreadyFull || (await Promise.all(stubs.map(m => fetchMealDetail(m.idMeal)))).filter(Boolean);
   try { await window.rulesReady; } catch { /* still show recipes without filtering */ }
 
-  const entries = full.map(meal => ({
-    meal,
-    ingredientsList: extractIngredientsList(meal),
-    ingredientsText: extractIngredientsList(meal).join(', ')
-  }));
+  const entries = full.map(meal => {
+    const ingredientsList = extractIngredientsList(meal);
+    const ingredientsText = ingredientsList.join(', ');
+    return {
+      meal,
+      ingredientsList,
+      ingredientsText,
+      // What actually gets checked against allergies/diet/dislikes also
+      // includes the dish's own name and category — not just its
+      // ingredient list — so a dislike/allergy word like "beef" still
+      // catches it even when TheMealDB's ingredient list only names a
+      // cut (e.g. "sirloin"), and category-based matches work at all.
+      checkText: `${meal.strMeal || ''} ${meal.strCategory || ''} ${ingredientsText}`
+    };
+  });
 
   const safe = filterSafeForSelected(entries);
   const names = getSelectedDiscoverProfiles().map(p => p.name).join(', ');
@@ -399,7 +421,7 @@ function badgesForIngredients(ingredientsText) {
 function renderDiscoverResults(entries, append, resultsId) {
   const container = document.getElementById(resultsId || 'discover-results');
   if (!append) container.innerHTML = '';
-  entries.forEach(({ meal, ingredientsList, ingredientsText }) => {
+  entries.forEach(({ meal, ingredientsList, ingredientsText, checkText }) => {
     const card = document.createElement('div');
     card.className = 'card discover-card';
     card.innerHTML = `
@@ -407,7 +429,7 @@ function renderDiscoverResults(entries, append, resultsId) {
       <div class="card-body">
         <h3>${meal.strMeal}</h3>
         <div class="meta">${meal.strCategory || ''}${meal.strArea ? ' · ' + meal.strArea : ''}</div>
-        <div class="badges">${badgesForIngredients(ingredientsText)}</div>
+        <div class="badges">${badgesForIngredients(checkText || ingredientsText)}</div>
         <div class="details">
           <h4>Ingredients</h4>
           <ul>${ingredientsList.map(i => `<li>${i}</li>`).join('')}</ul>
@@ -787,7 +809,10 @@ async function findCourseOptions(categoryPool, profiles, seenIds, count) {
     if (!meal) continue;
     const ingredientsList = extractIngredientsList(meal);
     const ingredientsText = ingredientsList.join(', ');
-    const verdict = checkIngredientsForProfiles(ingredientsText, profiles);
+    // Include the dish's name/category in what's checked, same reasoning
+    // as Browse: a cut name like "sirloin" won't always say "beef".
+    const checkText = `${meal.strMeal || ''} ${meal.strCategory || ''} ${ingredientsText}`;
+    const verdict = checkIngredientsForProfiles(checkText, profiles);
     const allOk = Object.values(verdict).every(v => v.status !== 'avoid');
     if (allOk) found.push({ meal, ingredientsList, ingredientsText });
   }
