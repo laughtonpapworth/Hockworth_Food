@@ -25,6 +25,7 @@ function mealAppLoadAllData() {
   if (typeof loadPantry === 'function') loadPantry();
   if (typeof loadEvents === 'function') loadEvents();
   if (typeof loadEventChecked === 'function') loadEventChecked();
+  if (typeof loadExtraPortions === 'function') loadExtraPortions();
   if (typeof refreshAll === 'function') refreshAll();
 }
 

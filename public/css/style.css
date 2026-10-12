@@ -90,6 +90,7 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
   font-family:inherit; font-weight:500; transition:all 0.15s;
 }
 .filter-btn.active{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
+.extra-portion-btn.active{background:var(--accent); border-color:var(--accent); color:#fff; font-weight:600;}
 
 /* ---- Cards ---- */
 .card-list{display:flex; flex-direction:column; gap:12px;}
@@ -99,6 +100,15 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
   box-shadow:var(--shadow); cursor:pointer; overflow:hidden; transition:transform 0.15s;
 }
 .card-body{padding:14px 16px;}
+.card-collapsed-row{display:flex; align-items:center; justify-content:space-between; gap:10px;}
+.card-collapsed-row h3{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.expand-toggle-btn{
+  flex-shrink:0; width:30px; height:30px; border-radius:50%; border:1px solid var(--border);
+  background:var(--card); color:var(--muted); font-size:0.9rem; cursor:pointer; transition:transform 0.15s;
+}
+.card.expanded .expand-toggle-btn{transform:rotate(180deg); color:var(--accent);}
+.card-primary-actions{margin-top:8px;}
+.card-primary-actions .card-action-btn{width:auto; margin:0; padding:8px 16px;}
 .card h3{margin:0 0 4px; font-size:1.02rem; font-weight:700;}
 .card .meta{color:var(--muted); font-size:0.82rem;}
 .card .tag{

@@ -134,7 +134,8 @@ document.getElementById('discover-search-btn').addEventListener('click', searchB
 document.getElementById('discover-ingredient-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') searchByIngredient();
 });
-document.getElementById('discover-random-btn').addEventListener('click', fetchRandomBatch);
+document.getElementById('discover-random-btn').addEventListener('click', () => fetchRandomBatch(false));
+document.getElementById('discover-loadmore-btn').addEventListener('click', () => fetchRandomBatch(true));
 
 function setDiscoverStatus(text) {
   document.getElementById('discover-status').textContent = text;
@@ -175,6 +176,9 @@ document.getElementById('area-select').addEventListener('change', function () {
 });
 
 async function searchByFilter(param, value) {
+  discoverShownIds = new Set();
+  const loadMoreBtn = document.getElementById('discover-loadmore-btn');
+  if (loadMoreBtn) loadMoreBtn.style.display = 'none';
   setDiscoverStatus(`Loading ${value} recipes...`);
   document.getElementById('discover-results').innerHTML = '';
   try {
@@ -193,6 +197,9 @@ async function searchByIngredient() {
   if (!ingredient) return;
   document.getElementById('category-select').value = '';
   document.getElementById('area-select').value = '';
+  discoverShownIds = new Set();
+  const loadMoreBtn = document.getElementById('discover-loadmore-btn');
+  if (loadMoreBtn) loadMoreBtn.style.display = 'none';
   setDiscoverStatus('Searching...');
   document.getElementById('discover-results').innerHTML = '';
   try {
@@ -209,28 +216,72 @@ async function searchByIngredient() {
   }
 }
 
-async function fetchRandomBatch() {
-  document.getElementById('category-select').value = '';
-  document.getElementById('area-select').value = '';
-  setDiscoverStatus('Finding some ideas...');
-  document.getElementById('discover-results').innerHTML = '';
+// "Show me a batch of ideas" used to pull from TheMealDB's fully-random
+// endpoint, which draws from their whole database — including Starter,
+// Side, Dessert and Miscellaneous categories, which is where almost all of
+// the odd, hard-to-source, non-dinner items were coming from. Restricting
+// to actual main-course categories fixes that at the source, rather than
+// trying to filter out "weird" afterwards.
+const MAIN_MEAL_CATEGORIES = ['Chicken', 'Beef', 'Pork', 'Seafood', 'Pasta', 'Vegetarian', 'Vegan', 'Lamb', 'Goat'];
+let discoverShownIds = new Set();
+const discoverCategoryListCache = {};
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+async function getCategoryMealList(category) {
+  if (discoverCategoryListCache[category]) return discoverCategoryListCache[category];
   try {
-    const calls = Array.from({ length: 12 }, () => fetch(`${MEALDB_BASE}/random.php`).then(r => r.json()));
-    const results = await Promise.all(calls);
-    const seen = new Set();
-    const meals = [];
-    results.forEach(r => {
-      const meal = r.meals && r.meals[0];
-      if (meal && !seen.has(meal.idMeal)) { seen.add(meal.idMeal); meals.push(meal); }
-    });
-    await fetchAndRender(meals.map(m => ({ idMeal: m.idMeal })), null, meals);
-  } catch (err) {
-    console.error(err);
-    setDiscoverStatus('Search failed — check your connection and try again.');
+    const res = await fetch(`${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`);
+    const data = await res.json();
+    const list = data.meals || [];
+    discoverCategoryListCache[category] = list;
+    return list;
+  } catch {
+    return [];
   }
 }
 
-async function fetchAndRender(stubs, contextLabel, alreadyFull) {
+async function fetchRandomBatch(isLoadMore) {
+  document.getElementById('category-select').value = '';
+  document.getElementById('area-select').value = '';
+  const loadMoreBtn = document.getElementById('discover-loadmore-btn');
+  if (!isLoadMore) {
+    discoverShownIds = new Set();
+    document.getElementById('discover-results').innerHTML = '';
+  }
+  setDiscoverStatus(isLoadMore ? 'Finding more ideas...' : 'Finding some meal ideas...');
+
+  // Pull a handful of candidates from several different main-course
+  // categories each time, so a batch (and each "load more") isn't just one
+  // cuisine, and so repeated clicks surface genuinely new meals rather than
+  // the same ones re-shuffled.
+  const categories = shuffleArray(MAIN_MEAL_CATEGORIES).slice(0, 4);
+  let candidates = [];
+  for (const cat of categories) {
+    const list = await getCategoryMealList(cat);
+    const unseen = list.filter(m => !discoverShownIds.has(m.idMeal));
+    candidates.push(...shuffleArray(unseen).slice(0, 5));
+  }
+  candidates = shuffleArray(candidates).slice(0, 10);
+
+  if (!candidates.length) {
+    setDiscoverStatus("That's everything in these categories for now — try again in a bit, or use the search above.");
+    return;
+  }
+  candidates.forEach(m => discoverShownIds.add(m.idMeal));
+
+  await fetchAndRender(candidates.map(m => ({ idMeal: m.idMeal })), null, null, isLoadMore);
+  if (loadMoreBtn) loadMoreBtn.style.display = '';
+}
+
+async function fetchAndRender(stubs, contextLabel, alreadyFull, append) {
   const full = alreadyFull || (await Promise.all(stubs.map(m => fetchMealDetail(m.idMeal)))).filter(Boolean);
   try { await window.rulesReady; } catch { /* still show recipes without filtering */ }
 
@@ -242,8 +293,9 @@ async function fetchAndRender(stubs, contextLabel, alreadyFull) {
 
   const safe = filterSafeForSelected(entries);
   const names = getSelectedDiscoverProfiles().map(p => p.name).join(', ');
-  setDiscoverStatus(`${safe.length} of ${entries.length} recipes${contextLabel ? ' (' + contextLabel + ')' : ''} are safe for ${names || 'your selection'}.`);
-  renderDiscoverResults(safe);
+  const verb = append ? 'more' : '';
+  setDiscoverStatus(`Found ${safe.length} ${verb} of ${entries.length} recipes${contextLabel ? ' (' + contextLabel + ')' : ''} safe for ${names || 'your selection'}.`);
+  renderDiscoverResults(safe, append);
 }
 
 async function fetchMealDetail(id) {
@@ -280,9 +332,9 @@ function badgesForIngredients(ingredientsText) {
   } catch (e) { console.error(e); return ''; }
 }
 
-function renderDiscoverResults(entries) {
+function renderDiscoverResults(entries, append) {
   const container = document.getElementById('discover-results');
-  container.innerHTML = '';
+  if (!append) container.innerHTML = '';
   entries.forEach(({ meal, ingredientsList, ingredientsText }) => {
     const card = document.createElement('div');
     card.className = 'card discover-card';

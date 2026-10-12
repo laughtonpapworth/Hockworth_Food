@@ -230,6 +230,33 @@ function setStatus(recipeId, status) {
   });
 }
 
+// ---- "Make extra for lunch tomorrow" (per-recipe, scales that recipe's
+// ingredients in the shopping list — doesn't affect the recipe itself) ----
+let EXTRA_PORTIONS = {};
+const extraPortionsDocRef = () =>
+  window.mealAppDb ? window.mealAppDb.collection('household').doc('extra-portions') : null;
+
+function isExtraPortion(id) { return !!EXTRA_PORTIONS[id]; }
+
+function toggleExtraPortion(id) {
+  const ref = extraPortionsDocRef();
+  if (!ref) { alert('Sign in first.'); return; }
+  const next = !isExtraPortion(id);
+  ref.set({ [id]: next ? true : firebase.firestore.FieldValue.delete() }, { merge: true }).catch(err => {
+    console.error('Could not update extra portion', err);
+    alert('Could not save that change — check your connection and try again.');
+  });
+}
+
+function loadExtraPortions() {
+  const ref = extraPortionsDocRef();
+  if (!ref) return;
+  ref.onSnapshot(snap => {
+    EXTRA_PORTIONS = snap.exists ? snap.data() : {};
+    refreshAll();
+  }, err => console.error('Could not load extra portions', err));
+}
+
 function deleteDiscovered(recipeId) {
   // recipeId looks like "discovered-<mealId>" — the underlying saved-recipes
   // doc is keyed by the bare mealId.
@@ -331,39 +358,64 @@ function wireCardEvents(container) {
       if (typeof startCookModeForRecipe === 'function') startCookModeForRecipe(btn.dataset.id, btn.dataset.variant);
     });
   });
+  container.querySelectorAll('.extra-portion-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      toggleExtraPortion(btn.dataset.id);
+    });
+  });
 }
 
 function recipeCardHtml(r, context) {
   const id = r.id || r.title;
   const titleAttr = (r.title || '').replace(/"/g, '&quot;');
+  const chevron = `<button type="button" class="expand-toggle-btn" aria-label="Show picture and details">▾</button>`;
+
+  // Only the core Plan/Saved action stays visible on the collapsed card —
+  // everything else (picture, tags, ingredients, method, and the less-used
+  // buttons) lives behind the dropdown arrow so the list reads as a short,
+  // scannable list of names rather than a wall of detail.
+  const primaryBtn = context === 'plan'
+    ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>`
+    : `<button class="secondary-btn card-action-btn add-to-plan-btn" data-id="${id}">Add to plan</button>`;
+
   const calendarBtn = context === 'plan'
     ? `<button class="secondary-btn card-action-btn add-calendar-btn" data-id="${id}" data-title="${titleAttr}">📅 Add to calendar</button>`
+    : '';
+  // Only meaningful while a recipe is actually in the Plan, since that's
+  // what feeds the shopping list — Saved recipes don't need this toggle.
+  const extraOn = isExtraPortion(id);
+  const extraBtn = context === 'plan'
+    ? `<button class="secondary-btn card-action-btn extra-portion-btn${extraOn ? ' active' : ''}" data-id="${id}">🍱 ${extraOn ? 'Making extra for tomorrow' : 'Make extra for lunch tomorrow'}</button>`
+    : '';
+  const deleteBtn = (context !== 'plan' && r.type === 'discovered')
+    ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>`
     : '';
   const cookBtn = r.type === 'swap'
     ? `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}" data-variant="his">👨‍🍳 Cook (His)</button>` +
       `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}" data-variant="hers">👨‍🍳 Cook (Her)</button>`
     : `<button class="secondary-btn card-action-btn cookmode-btn" data-id="${id}">👨‍🍳 Cook mode</button>`;
-  const actionBtn = (context === 'plan'
-    ? `<button class="secondary-btn card-action-btn remove-from-plan-btn" data-id="${id}">Remove from plan</button>${calendarBtn}`
-    : `<button class="secondary-btn card-action-btn add-to-plan-btn" data-id="${id}">Add to plan</button>` +
-      (r.type === 'discovered' ? `<button class="secondary-btn card-action-btn delete-recipe-btn" data-id="${id}">Delete</button>` : '')
-  ) + cookBtn;
+  const secondaryBtns = calendarBtn + extraBtn + deleteBtn + cookBtn;
 
   if (r.type === 'discovered') {
     return `
       <div class="card" data-recipe-id="${id}">
-        ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb-wide" loading="lazy">` : ''}
         <div class="card-body">
-          <h3>${r.title}</h3>
-          <div class="meta">${r.source === 'custom' ? 'Your own recipe' : 'Saved from Discover'}</div>
-          <div class="tag">${r.source === 'custom' ? 'custom' : 'discovered'}</div>
+          <div class="card-collapsed-row">
+            <h3>${r.title}</h3>
+            ${chevron}
+          </div>
+          <div class="card-primary-actions">${primaryBtn}</div>
           <div class="details">
+            ${r.thumb ? `<img src="${r.thumb}" alt="" class="discover-thumb-wide" loading="lazy">` : ''}
+            <div class="meta">${r.source === 'custom' ? 'Your own recipe' : 'Saved from Discover'}</div>
+            <div class="tag">${r.source === 'custom' ? 'custom' : 'discovered'}</div>
             <h4>Ingredients</h4>
             <ul>${(r.ingredients || []).map(i => `<li>${i}</li>`).join('')}</ul>
             <h4>Method</h4>
             <p>${(r.instructionsText || '').replace(/\r?\n/g, '<br>')}</p>
+            <div class="card-actions">${secondaryBtns}</div>
           </div>
-          <div class="card-actions">${actionBtn}</div>
         </div>
       </div>`;
   }
@@ -389,14 +441,20 @@ function recipeCardHtml(r, context) {
 
   return `
     <div class="card" data-recipe-id="${id}">
-      ${tile}
       <div class="card-body">
-        <h3>${r.title}</h3>
-        <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>
-        <div class="tag">${r.type}</div>
-        ${daysText ? `<div class="meta">${daysText}</div>` : ''}
-        <div class="details">${body}</div>
-        <div class="card-actions">${actionBtn}</div>
+        <div class="card-collapsed-row">
+          <h3>${r.title}</h3>
+          ${chevron}
+        </div>
+        <div class="card-primary-actions">${primaryBtn}</div>
+        <div class="details">
+          ${tile}
+          <div class="meta">Serves ${r.servings} · ${r.prepMinutes} min prep · ${r.cookMinutes} min cook${personTag}</div>
+          <div class="tag">${r.type}</div>
+          ${daysText ? `<div class="meta">${daysText}</div>` : ''}
+          ${body}
+          <div class="card-actions">${secondaryBtns}</div>
+        </div>
       </div>
     </div>`;
 }
@@ -408,12 +466,17 @@ function collectItems(recipes) {
   const seen = new Set();
   const items = [];
   recipes.forEach(r => {
+    const id = r.id || r.title;
+    // "Make extra for lunch tomorrow" scales that one recipe's quantities
+    // by 1.5x (roughly one extra portion) before it hits the shopping list.
+    const makingExtra = isExtraPortion(id);
     const all = [...(r.ingredients || []), ...(r.baseIngredients || [])];
     if (r.variants) {
       all.push(r.variants.his.protein, r.variants.hers.protein);
     }
     all.forEach(i => {
-      const key = i.trim();
+      const line = (makingExtra && typeof scaleIngredientLine === 'function') ? scaleIngredientLine(i, 1.5) : i;
+      const key = line.trim();
       if (!seen.has(key)) { seen.add(key); items.push(key); }
     });
   });
