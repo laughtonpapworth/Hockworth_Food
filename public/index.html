@@ -99,47 +99,82 @@
   </section>
 
   <section id="discover" class="tab-panel">
-    <div class="section-title">Find something new</div>
-    <div class="note">Pick who you're finding food for below — results are filtered to what's actually safe for everyone selected, not just labelled.</div>
+    <div class="section-title">🔎 Discover</div>
+    <div class="note">Browse by course, search by ingredient, import a link, or plan a dinner party.</div>
 
-    <div id="discover-profile-select" class="profile-select-row"></div>
+    <div class="subtab-row">
+      <button type="button" class="subtab-btn active" data-subtab="discover-browse-panel">Browse</button>
+      <button type="button" class="subtab-btn" data-subtab="discover-search-panel">Search</button>
+      <button type="button" class="subtab-btn" data-subtab="discover-import-panel">Import</button>
+      <button type="button" class="subtab-btn" data-subtab="discover-party-panel">🎉 Party</button>
+    </div>
 
-    <div class="import-panel">
-      <div class="import-panel-label">Import from a recipe link</div>
-      <div class="search-row search-row-wrap">
-        <input type="text" id="import-url-input" placeholder="Paste a BBC Good Food (or other) recipe link">
-        <button id="import-url-btn" class="primary-btn compact-btn">Import</button>
+    <!-- ===================== BROWSE ===================== -->
+    <div id="discover-browse-panel" class="subtab-panel active">
+      <div id="discover-profile-select" class="profile-select-row"></div>
+
+      <div class="course-chip-row" id="discover-course-chips">
+        <button type="button" class="course-chip" data-course="starter">Starter</button>
+        <button type="button" class="course-chip active" data-course="main">Main</button>
+        <button type="button" class="course-chip" data-course="side">Side</button>
+        <button type="button" class="course-chip" data-course="dessert">Dessert</button>
       </div>
-      <div class="search-row search-row-wrap" style="margin-top:8px;">
-        <input type="text" id="bbc-search-input" placeholder="Or search BBC Good Food for...">
-        <button id="bbc-search-btn" class="secondary-btn compact-btn">Open ↗</button>
+
+      <div class="dropdown-row" id="discover-protein-row">
+        <select id="discover-protein-select"><option value="">Any protein</option></select>
+        <select id="discover-cuisine-select"><option value="">Any cuisine</option></select>
       </div>
-      <div id="import-status" class="status-line"></div>
-      <div id="import-review" style="display:none;"></div>
+
+      <button id="discover-browse-btn" class="primary-btn" style="margin-bottom:12px;">Show me ideas</button>
+
+      <div id="discover-status" class="status-line"></div>
+      <div id="discover-results" class="card-grid"></div>
+      <button id="discover-loadmore-btn" class="secondary-btn" style="display:none;">Show me more ideas</button>
     </div>
 
-    <div class="search-row">
-      <input type="text" id="discover-ingredient-input" placeholder="Search an ingredient — chicken, lentils, sweet potato...">
-      <button id="discover-search-btn" class="primary-btn">Search</button>
+    <!-- ===================== SEARCH ===================== -->
+    <div id="discover-search-panel" class="subtab-panel">
+      <div id="discover-profile-select-search" class="profile-select-row"></div>
+      <div class="note">Search by an ingredient you've got, or by category/cuisine.</div>
+
+      <div class="search-row">
+        <input type="text" id="discover-ingredient-input" placeholder="Search an ingredient — chicken, lentils, sweet potato...">
+        <button id="discover-search-btn" class="primary-btn">Search</button>
+      </div>
+
+      <div class="dropdown-row">
+        <select id="category-select"><option value="">Any category</option></select>
+        <select id="area-select"><option value="">Any cuisine</option></select>
+      </div>
+
+      <div id="discover-search-status" class="status-line"></div>
+      <div id="discover-search-results" class="card-grid"></div>
     </div>
 
-    <div class="dropdown-row">
-      <select id="category-select"><option value="">Any category</option></select>
-      <select id="area-select"><option value="">Any cuisine</option></select>
+    <!-- ===================== IMPORT ===================== -->
+    <div id="discover-import-panel" class="subtab-panel">
+      <div class="import-panel">
+        <div class="import-panel-label">Import from a recipe link</div>
+        <div class="search-row search-row-wrap">
+          <input type="text" id="import-url-input" placeholder="Paste a BBC Good Food (or other) recipe link">
+          <button id="import-url-btn" class="primary-btn compact-btn">Import</button>
+        </div>
+        <div class="search-row search-row-wrap" style="margin-top:8px;">
+          <input type="text" id="bbc-search-input" placeholder="Or search BBC Good Food for...">
+          <button id="bbc-search-btn" class="secondary-btn compact-btn">Open ↗</button>
+        </div>
+        <div id="import-status" class="status-line"></div>
+        <div id="import-review" style="display:none;"></div>
+      </div>
     </div>
 
-    <div class="discover-actions">
-      <button id="discover-random-btn" class="secondary-btn">🎲 Show me a batch of ideas</button>
-    </div>
-
-    <div id="discover-status" class="status-line"></div>
-    <div id="discover-results" class="card-grid"></div>
-    <button id="discover-loadmore-btn" class="secondary-btn" style="display:none;">Show me more ideas</button>
-
-    <div class="planner-box">
-      <div class="section-title" style="font-size:1.1rem;">🎉 Plan a dinner party</div>
-      <div class="note">Build a named, multi-course meal for a specific headcount, step by step — kept completely separate from your weekly Plan, with its own shopping list scaled to how many people are coming.</div>
-      <button type="button" id="open-party-wizard-btn" class="primary-btn">Start planning a dinner party</button>
+    <!-- ===================== PARTY ===================== -->
+    <div id="discover-party-panel" class="subtab-panel">
+      <div class="planner-box" style="margin-top:0; border-top:none; padding-top:0;">
+        <div class="section-title" style="font-size:1.1rem;">🎉 Plan a dinner party</div>
+        <div class="note">Build a named, multi-course meal for a specific headcount, step by step — kept completely separate from your weekly Plan, with its own shopping list scaled to how many people are coming.</div>
+        <button type="button" id="open-party-wizard-btn" class="primary-btn">Start planning a dinner party</button>
+      </div>
     </div>
   </section>
 

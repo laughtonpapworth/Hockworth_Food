@@ -327,6 +327,16 @@ main{max-width:900px; margin:0 auto; padding:16px 16px 8px;}
 .planner-box{
   margin-top:28px; border-top:2px solid var(--border); padding-top:20px;
 }
+
+/* ---- Discover: Browse course chips ---- */
+.course-chip-row{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+.course-chip{
+  flex:1 1 auto; text-align:center; border:1px solid var(--border); background:var(--card);
+  color:var(--text); border-radius:20px; padding:9px 10px; font-size:0.85rem; font-weight:600;
+  cursor:pointer; transition:all 0.15s; font-family:inherit;
+}
+.course-chip.active{background:var(--accent); border-color:var(--accent); color:#fff;}
+.hidden{display:none !important;}
 .planner-course{margin-bottom:12px;}
 .planner-course .card-body{padding:14px 16px;}
 
